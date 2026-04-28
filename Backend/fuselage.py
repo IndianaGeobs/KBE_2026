@@ -1,19 +1,32 @@
 import os
+import sys
 import numpy as np
 from math import radians
+
+# Get the directory of the current script (the 'Backend' folder)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Go up one level to the main project folder ('KBE_2026')
+parent_dir = os.path.dirname(current_dir)
+
+# Add the main folder to Python's map so it can find the 'Readers' package
+sys.path.append(parent_dir)
+from Readers.fuselage_reader import get_fuselage_data
+
+# Build the path directly to the 'Files' folder for your text file
+DEFAULT_FUSELAGE = os.path.join(parent_dir, "Files", "fuselage.json")
 
 from parapy.core import Part, Attribute, Input, child
 from parapy.geom import GeomBase, Point, FittedCurve, Revolution, RotatedShape, Vector, Circle, translate
 
-# Import the read_fuselage function from your module
-from fuselage_reader import get_fuselage_data
 
 class Fuselage(GeomBase):
     """
     ParaPy GeomBase for creating a fuselage by revolving a radial profile
     loaded from a text file.
     """
-    fuselage_file = Input('fuselage.txt')
+
+    fuselage_file = Input(DEFAULT_FUSELAGE)
     show_constraints = Input(False)
     error_reading_fuselage = Input(False)
     max_revolution_curve_degree = Input(8)
@@ -27,18 +40,19 @@ class Fuselage(GeomBase):
 
     @Part
     def revolution_curve(self):
-        return FittedCurve(points= [(0.0, r, x) for x, r in zip(self.fuselage_data[0], self.fuselage_data[1])], hidden = True, max_degree = self.max_revolution_curve_degree)
+        return FittedCurve(points=[(0.0, r, x) for x, r in zip(self.fuselage_data[0], self.fuselage_data[1])],
+                           hidden=True, max_degree=self.max_revolution_curve_degree)
 
     @Part
     def solid(self):
         # rotate so that fuselage axis aligns with X or Y as needed
         return RotatedShape(
-            shape_in= Revolution(curve_in=self.revolution_curve),
+            shape_in=Revolution(curve_in=self.revolution_curve),
             rotation_point=Point(0, 0, 0),
             vector=Vector(0, 1, 0),
             angle=radians(90),
-            transparency = 0.8 if self.show_constraints else 0,
-            line_thickness = 1e-6,
+            transparency=0.8 if self.show_constraints else 0,
+            line_thickness=1e-6,
         )
 
     @Part
@@ -51,8 +65,8 @@ class Fuselage(GeomBase):
                           Vector(1, 0, 0),
                           self.fuselage_data[0][child.index],
                           "x"),
-                      color = 'red',
-                      transparency = 0 if self.show_constraints else 1
+                      color='red',
+                      transparency=0 if self.show_constraints else 1
                       )
 
     @Part
@@ -67,7 +81,7 @@ class Fuselage(GeomBase):
                           "x"),
                       color='red',
                       transparency=0 if self.show_constraints and self.fuselage_data[3][child.index] < 5 else 1,
-                      hidden = False if self.fuselage_data[3][child.index] < 5 else True
+                      hidden=False if self.fuselage_data[3][child.index] < 5 else True
                       )
 
     @Attribute
@@ -78,9 +92,9 @@ class Fuselage(GeomBase):
     def fus_length(self):
         return self.fuselage_data[4]
 
+
 if __name__ == '__main__':
     from parapy.gui import display
 
-    # Example usage: supply path to your fuselage.txt
     fuselage = Fuselage()
     display(fuselage)

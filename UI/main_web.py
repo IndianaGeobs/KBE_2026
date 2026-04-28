@@ -1,7 +1,15 @@
 import os
-import matlab.engine
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from parapy.webgui.core import display
 from app import App
+
+import matlab.engine
+
 
 # 1) Workspace cleanup
 cwd = os.getcwd()
@@ -19,6 +27,7 @@ for filename in os.listdir(cwd):
 
 # 2) Start MATLAB engine once globally
 eng = matlab.engine.start_matlab()
+
 
 # 3) Start Application
 if __name__ == "__main__":

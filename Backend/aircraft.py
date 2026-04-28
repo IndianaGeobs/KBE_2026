@@ -1,56 +1,54 @@
+import os
 from parapy.geom import GeomBase
 from parapy.core import Input, Part, action
 
+# 1. BUILD THE ABSOLUTE PATHS HERE
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+FILES_DIR = os.path.join(parent_dir, "Files")
+
+# 2. DEFINE THE CORRECT FILENAMES
+DEF_FUS = os.path.join(FILES_DIR, "fuselage.json") # Note: .json
+DEF_WING = os.path.join(FILES_DIR, "wing_default.txt")
+DEF_VT = os.path.join(FILES_DIR, "vert_tail_default.txt")
+DEF_HT = os.path.join(FILES_DIR, "hor_tail_default.txt")
+
 # Local module imports
-from fuselage_data_manager import FuselageDataManager
-from geometry_manager import GeometryManager
-from intersection_manager import IntersectionManager
-from cross_section_manager import CrossSectionManager
-from optimization_manager import OptimizationManager
-from graph_manager import GraphManager
-from optimized_results import OptimizedResults
-from intersection_checker import IntersectionChecker
-from optimized_intersection_checker import OptimizedIntersectionChecker
+from Backend.fuselage_data_manager import FuselageDataManager
+from Backend.geometry_manager import GeometryManager
+from Backend.intersection_manager import IntersectionManager
+from Backend.cross_section_manager import CrossSectionManager
+from Backend.optimization_manager import OptimizationManager
+from Backend.graph_manager import GraphManager
+from Backend.optimized_results import OptimizedResults
+from Backend.intersection_checker import IntersectionChecker
+from Backend.optimized_intersection_checker import OptimizedIntersectionChecker
+
 
 class Aircraft(GeomBase):
     """Main Aircraft class that orchestrates all managers."""
 
-    # Inputs
-    fuselage_file = Input("fuselage.txt")
-    wing_file = Input("wing.txt")
-    vert_tail_file = Input("vert_tail.txt")
-    hor_tail_file = Input("hor_tail.txt")
+    fuselage_file = Input(DEF_FUS)
+    wing_file = Input(DEF_WING)
+    vert_tail_file = Input(DEF_VT)
+    hor_tail_file = Input(DEF_HT)
+
     include_hor_tail = Input(True)
-
-    # Error flags
-    error_lifting_surface = Input(False)
-    error_wing_tip = Input(False)
-    error_ht_tip = Input(False)
-    error_vt_tip = Input(False)
-    error_wings_vert_tail_inter = Input(False)
-    error_hor_tail_vert_tail_inter = Input(False)
-    error_lifting_surface_wing_new = Input(False)
-    error_lifting_surface_ht_new = Input(False)
-    error_lifting_surface_vt_new = Input(False)
-
-    # Offsets
-    x_offs_wings = Input(20)       # 20% of the fuselage
-    z_offs_wings = Input(0.0)
-    x_offs_tail  = Input(55)       # 55% of the fuselage
-    z_offs_tail  = Input(0.0)
-    x_offs_vert_tail = Input(55)
-    z_offs_vert_tail = Input(0.0)
     show_constraints = Input(False)
 
-    @Part
-    def fuselage_data(self):
-        """Manages fuselage data and derived attributes."""
-        return FuselageDataManager(geometry_manager=self.geometry)
+    # Offsets
+    x_offs_wings = Input(20)
+    z_offs_wings = Input(0.0)
+    x_offs_tail = Input(55)
+    z_offs_tail = Input(0.0)
+    x_offs_vert_tail = Input(55)
+    z_offs_vert_tail = Input(0.0)
 
     @Part
     def geometry(self):
         """Manages all geometric components."""
         return GeometryManager(
+            # Pass the absolute paths down to the GeometryManager
             fuselage_file=self.fuselage_file,
             wing_file=self.wing_file,
             vert_tail_file=self.vert_tail_file,
@@ -65,14 +63,17 @@ class Aircraft(GeomBase):
             z_offs_vert_tail=self.z_offs_vert_tail,
         )
 
+
+    @Part
+    def fuselage_data(self):
+        return FuselageDataManager(geometry_manager=self.geometry)
+
     @Part
     def intersections(self):
-        """Manages all intersection operations."""
         return IntersectionManager(geometry_manager=self.geometry)
 
     @Part
     def cross_sections(self):
-        """Manages cross-sectional area calculations."""
         return CrossSectionManager(
             geometry_manager=self.geometry,
             include_hor_tail=self.include_hor_tail,

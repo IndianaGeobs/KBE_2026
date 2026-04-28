@@ -1,8 +1,8 @@
 from parapy.geom import GeomBase, MirroredShape, Subtracted, Compound
 from parapy.core import Input, Part
 
-from lifting_surface import LiftingSurface
-from fuselage import Fuselage
+from Backend.lifting_surface import LiftingSurface
+from Backend.fuselage import Fuselage
 
 class GeometryManager(GeomBase):
     """Manages all geometric components of the aircraft."""

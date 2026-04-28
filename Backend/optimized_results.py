@@ -4,7 +4,7 @@ from parapy.core import Base, Input, Attribute, Part, action
 from parapy.geom import Compound
 from parapy.exchange.step import STEPWriter
 
-from fuselage import Fuselage
+from Backend.fuselage import Fuselage
 
 class OptimizedResults(Base):
     """
