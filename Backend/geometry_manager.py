@@ -1,8 +1,21 @@
-from parapy.geom import GeomBase, MirroredShape, Subtracted, Compound
-from parapy.core import Input, Part
+import sys
+import os
+
+# 1. Find the project root directory
+current_dir = os.path.dirname(os.path.abspath(__file__))  # Backend folder
+parent_dir = os.path.dirname(current_dir)                 # KBE_2026 folder
+
+# 2. Add the project root to Python's search path
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# 3. NOW ParaPy and absolute imports will work perfectly!
+from parapy.geom import GeomBase, MirroredShape, Subtracted, Compound, Fused
+from parapy.core import Input, Part, Attribute
 
 from Backend.lifting_surface import LiftingSurface
 from Backend.fuselage import Fuselage
+from Readers.fuselage_reader import get_fuselage_data
 
 class GeometryManager(GeomBase):
     """Manages all geometric components of the aircraft."""
@@ -23,13 +36,55 @@ class GeometryManager(GeomBase):
     x_offs_vert_tail = Input()
     z_offs_vert_tail = Input()
 
-    @Part
+    '''@Part
     def fuselage(self):
-        """Reads station‐&‐radius data from `fuselage_file`."""
+        """Reads station‐&‐radius data from fuselage file."""
         return Fuselage(
             fuselage_file=self.fuselage_file,
             show_constraints=self.show_constraints,
             color="Gray",
+        )'''
+
+    @Attribute
+    def raw_fuselage_tuple(self):
+        """One central place to load the data for all sections."""
+        from Readers.fuselage_reader import get_fuselage_data
+        return get_fuselage_data(self.fuselage_file)
+
+    @Part
+    def nose(self):
+        return Fuselage(
+            fuselage_data=self.raw_fuselage_tuple,
+            start_perc=0.0,
+            end_perc=0.2,
+            color="LightBlue"
+        )
+
+    @Part
+    def main_body(self):
+        return Fuselage(
+            fuselage_data=self.raw_fuselage_tuple,
+            start_perc=0.2,
+            end_perc=0.7,
+            color="Gray"
+        )
+
+    @Part
+    def tail(self):
+        return Fuselage(
+            fuselage_data=self.raw_fuselage_tuple,
+            start_perc=0.7,
+            end_perc=1.0,
+            color="LightSteelBlue"
+        )
+
+    @Part
+    def fuselage_solid(self):
+        return Fused(
+            shape_in=self.nose.solid,
+            tool=[self.main_body.solid, self.tail.solid],
+            color="gray",
+            line_thickness=1e-9
         )
 
     @Part
@@ -60,7 +115,7 @@ class GeometryManager(GeomBase):
         """Subtract the fuselage from the combined wing pair."""
         return Subtracted(
             shape_in=self.wings_pair,
-            tool=self.fuselage.solid,
+            tool=self.fuselage_solid,
         )
 
     @Part
@@ -77,7 +132,7 @@ class GeometryManager(GeomBase):
         """Subtract only the fuselage from the vertical‐tail solid."""
         return Subtracted(
             shape_in=self.vert_tail.solid,
-            tool=self.fuselage.solid,
+            tool=self.fuselage_solid,
         )
 
     @Part
@@ -117,22 +172,19 @@ class GeometryManager(GeomBase):
         """Subtract only the fuselage from the horizontal‐tail solid."""
         return Subtracted(
             shape_in=self.hor_tail if self.include_hor_tail else [],
-            tool=self.fuselage.solid,
+            tool=self.fuselage_solid,
         )
 
     @Part
     def aircraft_solid(self):
-        """The full combined aircraft (fuselage fused with wings & tail)."""
+        """The full combined aircraft."""
         return Compound(
             built_from=[
-                self.fuselage.solid,
+                self.fuselage_solid,  # This is the Fused nose/body/tail
                 self.wings_pair,
                 self.vert_tail.solid,
-                *(
-                    [self.hor_tail]
-                    if self.include_hor_tail
-                    else []
-                )
+                *([self.hor_tail] if self.include_hor_tail else [])
             ],
-            color="gray"
+            color="gray",
+            line_thickness=0
         )

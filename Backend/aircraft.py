@@ -1,6 +1,6 @@
 import os
 from parapy.geom import GeomBase
-from parapy.core import Input, Part, action
+from parapy.core import Input, Part, action, Attribute
 
 # 1. BUILD THE ABSOLUTE PATHS HERE
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -178,9 +178,9 @@ class Aircraft(GeomBase):
         self.optimized_results.step_file_optimized_aircraft()
 
     # Convenience properties
-    @property
+    @Attribute
     def fuselage(self):
-        return self.geometry.fuselage
+        return self.geometry.fuselage_solid
 
     @property
     def right_wing(self):
