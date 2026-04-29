@@ -1,41 +1,34 @@
 import os
 import sys
 import numpy as np
-from math import radians
 
 # Get the directory of the current script (the 'Backend' folder)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Go up one level to the main project folder ('KBE_2026')
 parent_dir = os.path.dirname(current_dir)
-
-# Add the main folder to Python's map so it can find the 'Readers' package
 sys.path.append(parent_dir)
+
 from Readers.fuselage_reader import get_fuselage_data
 
-# Build the path directly to the 'Files' folder for your text file
 DEFAULT_FUSELAGE = os.path.join(parent_dir, "Files", "fuselage.json")
 
-from parapy.core import Part, Attribute, Input, child
-from parapy.geom import GeomBase, Point, FittedCurve, Revolution, RotatedShape, Vector, Circle, translate, Wire, LineSegment, Face, RevolvedSolid
+from parapy.core import Part, Attribute, Input
+from parapy.geom import GeomBase, Point, Circle, LoftedSolid
 
 
 class Fuselage(GeomBase):
     """
-    ParaPy GeomBase for creating a fuselage by revolving a radial profile
-    loaded from a text file.
+    Creates a fuselage section using Lofting.
+    The Main Body is a perfect cylinder. The Tail has a flat top and curves upward.
     """
 
-    # Percentage inputs (0.0 to 1.0)
     start_perc = Input(0.0)
     end_perc = Input(1.0)
-
-
     fuselage_data = Input()
     fuselage_file = Input(DEFAULT_FUSELAGE)
     show_constraints = Input(False)
-    error_reading_fuselage = Input(False)
-    max_revolution_curve_degree = Input(8)
+
+    # Give color an explicit default so it doesn't crash if omitted
+    color = Input("gray")
 
     @Attribute
     def sliced_data(self):
@@ -44,132 +37,86 @@ class Fuselage(GeomBase):
         x_start = self.start_perc * length
         x_end = self.end_perc * length
 
-        # This is the "Master Radius" for the cylinder connections
-        cyl_radius = float(max(rs))
-
         # Identify which section we are currently building
         is_nose = self.start_perc < 0.05
         is_tail = self.end_perc > 0.95
         is_main_body = not is_nose and not is_tail
 
+        # Calculate exact mating radius at the 20% mark
+        nose_end_x = 0.2 * length
+        cyl_radius = float(np.interp(nose_end_x, xs, rs))
+
         if is_main_body:
-            # Force perfect cylinder
+            # Force perfect cylinder using the nose's exit radius
             xs_clean = [x_start, x_end]
             rs_clean = [cyl_radius, cyl_radius]
 
         elif is_nose:
-            # Interpolate normally, but FORCE the last point to match the cylinder
+            # Nose naturally ends at nose_end_x. Force the final point to match.
             r_start = float(np.interp(x_start, xs, rs))
             mask = (xs > x_start + 1e-5) & (xs < x_end - 1e-5)
             xs_clean = [x_start] + xs[mask].tolist() + [x_end]
-            rs_clean = [r_start] + rs[mask].tolist() + [cyl_radius]  # Forced match
+            rs_clean = [r_start] + rs[mask].tolist() + [cyl_radius]
 
         elif is_tail:
-            # Interpolate normally, but FORCE the first point to match the cylinder
+            # The tail starts at 70%. We force its very first radius to
+            # match the cylinder to prevent a shelf/step.
             r_end = float(np.interp(x_end, xs, rs))
             mask = (xs > x_start + 1e-5) & (xs < x_end - 1e-5)
             xs_clean = [x_start] + xs[mask].tolist() + [x_end]
-            rs_clean = [cyl_radius] + rs[mask].tolist() + [r_end]  # Forced match
+            rs_clean = [cyl_radius] + rs[mask].tolist() + [r_end]
 
         return xs_clean, rs_clean
 
     @Part(parse=False)
-    def revolution_curve(self):
-        """1. Draws the top profile line."""
+    def cross_sections(self):
+        """Generates the circular ribs to stretch the skin over."""
         xs_clean, rs_clean = self.sliced_data
-        pts = [(float(x), float(r), 0.0) for x, r in zip(xs_clean, rs_clean)]
 
-        # Use degree 1 for cylinders, degree 3 for curves
-        is_cyl = len(pts) == 2
-        safe_degree = 1 if is_cyl else min(5, len(pts) - 1)
+        # We need the cylinder radius to know where our "Flat Top" ceiling is
+        length = self.fuselage_data[4]
+        cyl_radius = float(np.interp(0.2 * length, self.fuselage_data[0], self.fuselage_data[1]))
 
-        return FittedCurve(points=pts, hidden=True, max_degree=safe_degree)
+        is_tail = self.end_perc > 0.95
+
+        ribs = []
+        for x, r in zip(xs_clean, rs_clean):
+            # THE ZERO-RADIUS FIX:
+            # If the radius is literally 0.0, we make it 0.1 millimeters instead.
+            # This is completely invisible, but it prevents the CAD math from crashing!
+            safe_r = max(float(r), 1e-4)
+
+            # THE FLAT TOP MATH:
+            # Normally, the top of a circle is at Y = +safe_r.
+            # We want the top to stay perfectly flush with the ceiling (+cyl_radius).
+            # To do that, we shift the center of the circle UP by the difference.
+            if is_tail:
+                z_shift = cyl_radius - safe_r
+            else:
+                z_shift = 0.0
+
+            # Position the circle: Move to X, move UP to Y, and rotate 90 deg around Y
+            # so the circle faces down the X-axis (standing up instead of lying flat).
+            pos = self.position.translate('x', float(x)).translate('z', z_shift).rotate90('y')
+
+            ribs.append(Circle(radius=safe_r, position=pos, hidden=True))
+
+        return ribs
 
     @Part(parse=False)
-    def profile_wire(self):
-        """2. Builds a perfectly closed 2D loop."""
-        top_edge = self.revolution_curve
-
-        p_start = top_edge.start
-        p_end = top_edge.end
-
-        # CHANGED: Central axis math now uses X instead of Z
-        axis_end = Point(p_end.x, 0.0, 0.0)
-        axis_start = Point(p_start.x, 0.0, 0.0)
-
-        edges = [top_edge]
-
-        # Back Cap (Check Y coordinate for radius)
-        if p_end.y > 1e-4:
-            edges.append(LineSegment(p_end, axis_end))
-
-        # Bottom Axis Line
-        edges.append(LineSegment(axis_end, axis_start))
-
-        # Front Cap
-        if p_start.y > 1e-4:
-            edges.append(LineSegment(axis_start, p_start))
-
-        return Wire(edges)
-
-    @Part
-    def profile_face(self):
-        """Fills the closed wire loop to create a solid 2D surface."""
-        return Face(island=self.profile_wire, hidden=True)
-
-    @Part
     def solid(self):
-        """4. Revolves the filled Face around the X-axis to create a true Solid!"""
-        return RevolvedSolid(
-            built_from=self.profile_face,
-            center=Point(0, 0, 0),
-            direction=Vector(1, 0, 0),
-            color=self.color if hasattr(self, "color") else "gray",
-            transparency=0.8 if self.show_constraints else 0,
-            line_thickness=1e-9,
-            isos=0
+        """Wraps a perfectly sealed 3D solid skin over the circular ribs."""
+        return LoftedSolid(
+            profiles=self.cross_sections,
+            ruled=True,
+            color=self.color,
+            line_thickness=1e-9,  # Micro-value to bypass validation error
+            isos=0,  # Hides the web lines across the surface
+            transparency=0.8 if self.show_constraints else 0
         )
-
-    @Part
-    def min_radii(self):
-        """List of points (station, radius, 0) in the XY plane."""
-        return Circle(quantify=len(self.fuselage_data[0]),
-                      radius=self.fuselage_data[2][child.index],
-                      position=translate(
-                          self.position.rotate90('y'),
-                          Vector(1, 0, 0),
-                          self.fuselage_data[0][child.index],
-                          "x"),
-                      color='red',
-                      transparency=0 if self.show_constraints else 1
-                      )
-
-    @Part
-    def max_radii(self):
-        """List of points (station, radius, 0) in the XY plane."""
-        return Circle(quantify=len(self.fuselage_data[0]),
-                      radius=self.fuselage_data[3][child.index],
-                      position=translate(
-                          self.position.rotate90('y'),
-                          Vector(1, 0, 0),
-                          self.fuselage_data[0][child.index],
-                          "x"),
-                      color='red',
-                      transparency=0 if self.show_constraints and self.fuselage_data[3][child.index] < 5 else 1,
-                      hidden=False if self.fuselage_data[3][child.index] < 5 else True
-                      )
-
-    @Attribute
-    def error_fuselage(self):
-        return self.fuselage_data[5]
-
-    @Attribute
-    def fus_length(self):
-        return self.fuselage_data[4]
 
 
 if __name__ == '__main__':
     from parapy.gui import display
 
-    fuselage = Fuselage()
-    display(fuselage)
+    display(Fuselage())

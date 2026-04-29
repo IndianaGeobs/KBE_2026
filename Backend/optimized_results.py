@@ -49,7 +49,7 @@ class OptimizedResults(Base):
         shutil.copy2(src, dest)
         os.remove(src)
 
-    @Part
+    @Part(parse=False)
     def new_fuselage(self):
         """Create new fuselage using optimized data."""
         return Fuselage(fuselage_file=self.optimized_fuselage_file, max_revolution_curve_degree=2, color="deepskyblue")
