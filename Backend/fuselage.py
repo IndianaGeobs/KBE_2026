@@ -21,6 +21,9 @@ class Fuselage(GeomBase):
     The Main Body is a perfect cylinder. The Tail has a flat top and curves upward.
     """
 
+    target_length = Input(15.0)
+    target_radius = Input(2.8)
+
     start_perc = Input(0.0)
     end_perc = Input(1.0)
     fuselage_data = Input()
@@ -66,7 +69,17 @@ class Fuselage(GeomBase):
             xs_clean = [x_start] + xs[mask].tolist() + [x_end]
             rs_clean = [cyl_radius] + rs[mask].tolist() + [r_end]
 
-        return xs_clean, rs_clean
+        original_section_length = xs_clean[-1] - xs_clean[0]
+
+        scaled_xs = []
+        for x in xs_clean:
+            new_x = ((x - xs_clean[0])/original_section_length)*self.target_length
+            scaled_xs.append(new_x)
+
+        original_max_radius = self.target_radius
+        scaled_rs = [(r/original_max_radius)*self.target_radius for r in rs_clean]
+
+        return scaled_xs, scaled_rs
 
     @Part(parse=False)
     def cross_sections(self):

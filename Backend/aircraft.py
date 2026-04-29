@@ -44,6 +44,11 @@ class Aircraft(GeomBase):
     x_offs_vert_tail = Input(55)
     z_offs_vert_tail = Input(0.0)
 
+    nose_length = Input(12.6)
+    main_body_length = Input(31.5)
+    tail_length = Input(18.9)
+    fuselage_radius = Input(2.829)
+
     @Part
     def geometry(self):
         """Manages all geometric components."""
@@ -61,12 +66,21 @@ class Aircraft(GeomBase):
             z_offs_tail=self.z_offs_tail,
             x_offs_vert_tail=self.x_offs_vert_tail,
             z_offs_vert_tail=self.z_offs_vert_tail,
+            nose_length=self.nose_length,
+            main_body_length=self.main_body_length,
+            tail_length=self.tail_length,
+            fuselage_radius=self.fuselage_radius
         )
-
 
     @Part
     def fuselage_data(self):
-        return FuselageDataManager(geometry_manager=self.geometry)
+        return FuselageDataManager(
+            geometry_manager=self.geometry,
+            nose_length=self.nose_length,
+            main_body_length=self.main_body_length,
+            tail_length=self.tail_length,
+            fuselage_radius=self.fuselage_radius
+        )
 
     @Part
     def intersections(self):
@@ -77,6 +91,8 @@ class Aircraft(GeomBase):
         return CrossSectionManager(
             geometry_manager=self.geometry,
             include_hor_tail=self.include_hor_tail,
+            fuselage_stations=self.fuselage_data.xs,
+            fuselage_radii_list=self.fuselage_data.max_radii
         )
 
     @Part
@@ -119,7 +135,7 @@ class Aircraft(GeomBase):
             z_offs_vert_tail=self.z_offs_vert_tail,
             fuselage_file=self.fuselage_file,
             wing_file=self.wing_file,
-            fuselage=self.geometry.fuselage,
+            fuselage=self.geometry.fuselage_solid,
             right_wing=self.geometry.right_wing,
         )
 
@@ -127,7 +143,8 @@ class Aircraft(GeomBase):
     def optimized_results(self):
         """Handles optimized fuselage results and exports."""
         return OptimizedResults(
-            fuselage=self.geometry.fuselage,
+            fuselage=self.geometry.fuselage_solid,
+            fuselage_stations=self.fuselage_data.xs,
             r_optimized=self.optimization.r_optimized,
             fuselage_min_radii=self.fuselage_data.min_radii,
             fuselage_max_radii=self.fuselage_data.max_radii,

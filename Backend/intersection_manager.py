@@ -10,21 +10,21 @@ class IntersectionManager(GeomBase):
     def inters_right_wing_fuselage_root_curve(self):
         return Common(
             args=[self.geometry_manager.right_wing.airfoil_curves[0]],
-            tools=[self.geometry_manager.fuselage.solid],
+            tools=[self.geometry_manager.fuselage_solid],
         )
 
     @Part
     def inters_right_hor_tail_fuselage_root_curve(self):
         return Common(
             args=[self.geometry_manager.h_tail_right.airfoil_curves[0]],
-            tools=[self.geometry_manager.fuselage.solid],
+            tools=[self.geometry_manager.fuselage_solid],
         )
 
     @Part
     def inters_vert_tail_fuselage_root_curve(self):
         return Common(
             args=[self.geometry_manager.vert_tail.airfoil_curves[0]],
-            tools=[self.geometry_manager.fuselage.solid],
+            tools=[self.geometry_manager.fuselage_solid],
         )
 
     @Part

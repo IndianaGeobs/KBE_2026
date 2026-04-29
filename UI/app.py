@@ -89,6 +89,10 @@ class App(Component):
                 new_z_offs_tail = float(panel.pending_z_offs_tail)
                 new_x_offs_vert = float(panel.pending_x_offs_vert_tail)
                 new_z_offs_vert = float(panel.pending_z_offs_vert_tail)
+                new_nose_length = float(panel.pending_nose_length)
+                new_body_length = float(panel.pending_main_body_length)
+                new_tail_length = float(panel.pending_tail_length)
+                new_radius = float(panel.pending_fuselage_radius)
             except ValueError:
                 self._revert_to_last_committed(panel, old)
                 panel.error_wing = True
@@ -112,6 +116,10 @@ class App(Component):
                     x_offs_vert_tail=new_x_offs_vert,
                     z_offs_vert_tail=new_z_offs_vert,
                     show_constraints=AR.show_constraints,
+                    nose_length=new_nose_length,
+                    main_body_length=new_body_length,
+                    tail_length=new_tail_length,
+                    fuselage_radius = new_radius
                 )
 
                 fuselage_reading_error = temp_AR.aircraft.intersection_checker.fuselage_reading_error_status
@@ -123,7 +131,8 @@ class App(Component):
 
                 validation_errors = self._check_geometry_intersections(temp_AR, panel, old)
                 if validation_errors:
-                    return
+                    #return
+                    pass
 
             except Exception as e:
                 import traceback
@@ -134,7 +143,7 @@ class App(Component):
 
             self._apply_validated_changes(panel, old, new_x_offs_wings, new_z_offs_wings,
                                           new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
-                                          new_include_hor_tail)
+                                          new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius)
         finally:
             self.applying = False
 
@@ -290,7 +299,7 @@ class App(Component):
 
     def _apply_validated_changes(self, panel, old, new_x_offs_wings, new_z_offs_wings,
                                  new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
-                                 new_include_hor_tail):
+                                 new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius):
         AR.wing_file = panel.pending_wing_file or old["wing_file"]
         AR.vert_tail_file = panel.pending_vert_tail_file or old["vert_tail_file"]
         AR.hor_tail_file = panel.pending_hor_tail_file or old["hor_tail_file"]
@@ -303,6 +312,11 @@ class App(Component):
         AR.z_offs_tail = new_z_offs_tail
         AR.x_offs_vert_tail = new_x_offs_vert
         AR.z_offs_vert_tail = new_z_offs_vert
+
+        AR.nose_length = new_nose_length
+        AR.main_body_length = new_body_length
+        AR.tail_length = new_tail_length
+        AR.fuselage_radius = new_radius
 
         self.last_wing_file = AR.wing_file
         self.last_vert_tail_file = AR.vert_tail_file

@@ -21,10 +21,12 @@ class OptimizedResults(Base):
     hor_tail           = Input(None)
     include_hor_tail   = Input(True)
 
+    fuselage_stations = Input()
+
     @Attribute
     def optimized_fuselage_file(self):
         """Write out a temporary 'optimized_fuselage.txt' with 4 columns per line."""
-        stations = [pt[2] for pt in self.fuselage.revolution_curve.points]
+        stations = self.fuselage_stations
         optimized_radii = self.r_optimized.tolist()
         min_radii = self.fuselage_min_radii
         max_radii = self.fuselage_max_radii

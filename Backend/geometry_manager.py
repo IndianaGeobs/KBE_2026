@@ -28,6 +28,12 @@ class GeometryManager(GeomBase):
     include_hor_tail = Input()
     show_constraints = Input()
 
+    #Parametric fuselage Inputs
+    nose_length = Input(12.6)
+    main_body_length = Input(31.5)
+    tail_length = Input(18.9)
+    fuselage_radius = Input(2.829)
+
     # Offsets
     x_offs_wings = Input()
     z_offs_wings = Input()
@@ -55,27 +61,36 @@ class GeometryManager(GeomBase):
     def nose(self):
         return Fuselage(
             fuselage_data=self.raw_fuselage_tuple,
+            position=self.position,
             start_perc=0.0,
             end_perc=0.2,
-            color="LightBlue"
+            color="LightBlue",
+            target_length=self.nose_length,
+            target_radius=self.fuselage_radius
         )
 
     @Part
     def main_body(self):
         return Fuselage(
             fuselage_data=self.raw_fuselage_tuple,
+            position=self.position.translate('x', self.nose_length),
             start_perc=0.2,
             end_perc=0.7,
-            color="Gray"
+            color="Gray",
+            target_length=self.main_body_length,
+            target_radius=self.fuselage_radius
         )
 
     @Part
     def tail(self):
         return Fuselage(
             fuselage_data=self.raw_fuselage_tuple,
+            position=self.position.translate('x', self.nose_length + self.main_body_length),
             start_perc=0.7,
             end_perc=1.0,
-            color="LightSteelBlue"
+            color="LightSteelBlue",
+            target_length=self.tail_length,
+            target_radius=self.fuselage_radius
         )
 
     @Part

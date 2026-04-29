@@ -30,6 +30,11 @@ class InputsPanel(Component):
     pending_x_offs_vert_tail = State(str(AR.x_offs_vert_tail))
     pending_z_offs_vert_tail = State(str(AR.z_offs_vert_tail))
 
+    pending_nose_length = State("12.6")
+    pending_main_body_length = State("31.5")
+    pending_tail_length = State("18.9")
+    pending_fuselage_radius = State("2.829")
+
     pending_include_hor_tail = State(AR.include_hor_tail)
 
     # Reset keys to force file input re-render
@@ -161,6 +166,65 @@ class InputsPanel(Component):
                 ],
                 filenames[3],
             ],
+
+            layout.Box(orientation="vertical", gap="1.5em", style={"marginTop": "1em", "padding": "0 10px"})[
+                # --- NOSE LENGTH ---
+                layout.Box(orientation="vertical")[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"Nose Length: {self.pending_nose_length} m"],
+                    mui.Slider(
+                        value=float(self.pending_nose_length),
+                        min=5.0,
+                        max=25.0,
+                        step=0.1,
+                        valueLabelDisplay="auto",
+                        onChangeCommitted=lambda ev, val: setattr(self, "pending_nose_length", str(val))
+                    )
+                ],
+
+                    # --- MAIN BODY LENGTH ---
+                layout.Box(orientation="vertical")[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"Main Body Length: {self.pending_main_body_length} m"],
+                    mui.Slider(
+                        value=float(self.pending_main_body_length),
+                        min=10.0,
+                        max=60.0,
+                        step=0.5,
+                        valueLabelDisplay="auto",
+                        onChangeCommitted=lambda ev, val: setattr(self, "pending_main_body_length", str(val))
+                    )
+                ],
+
+                    # --- TAIL LENGTH ---
+                layout.Box(orientation="vertical")[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"Tail Length: {self.pending_tail_length} m"],
+                    mui.Slider(
+                        value=float(self.pending_tail_length),
+                        min=5.0,
+                        max=30.0,
+                        step=0.1,
+                        valueLabelDisplay="auto",
+                        onChangeCommitted=lambda ev, val: setattr(self, "pending_tail_length", str(val))
+                    )
+                ],
+
+                    # --- FUSELAGE RADIUS ---
+                layout.Box(orientation="vertical")[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"Fuselage Radius: {self.pending_fuselage_radius} m"],
+                    mui.Slider(
+                        value=float(self.pending_fuselage_radius),
+                        min=1.0,
+                        max=5.0,
+                        step=0.01,
+                        valueLabelDisplay="auto",
+                        onChangeCommitted=lambda ev, val: setattr(self, "pending_fuselage_radius", str(val))
+                    )
+                ]
+            ],
+
             mui.Divider(),
 
             # Wing

@@ -1,5 +1,8 @@
 from parapy.core import Base, Input, Attribute
 
+import os
+
+
 class IntersectionChecker(Base):
     """Manages all intersection checks and error detection for aircraft components."""
 
@@ -144,7 +147,9 @@ class IntersectionChecker(Base):
     @Attribute
     def fuselage_reading_error_status(self):
         _ = self.fuselage_file
-        return self.fuselage.error_fuselage
+        if not self.fuselage_file or not os.path.exists(self.fuselage_file):
+            return True
+        return False
 
     @Attribute
     def lifting_surface_reading_error_status(self):

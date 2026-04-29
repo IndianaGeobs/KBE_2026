@@ -10,17 +10,20 @@ class CrossSectionManager(GeomBase):
     geometry_manager = Input()
     include_hor_tail = Input()
 
+    fuselage_stations = Input()
+    fuselage_radii_list = Input()
+
     @Attribute
     def fuselage_sections_number(self):
-        return len(self.geometry_manager.fuselage.revolution_curve.points)
+        return len(self.fuselage_stations)
 
     @Attribute
     def fuselage_length(self):
-        return self.geometry_manager.fuselage.revolution_curve.points[-1][2]
+        return self.fuselage_stations[-1]
 
     @Attribute
     def fuselage_radii(self):
-        return [pt[1] for pt in self.geometry_manager.fuselage.revolution_curve.points]
+        return self.fuselage_radii_list
 
     @Part
     def planes(self):

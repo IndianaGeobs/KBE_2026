@@ -26,13 +26,18 @@ class AreaRule(Base):
 
     x_offs_wings = Input(20)
     z_offs_wings = Input(-2)
-    x_offs_tail = Input(54.0)
+    x_offs_tail = Input(47.0)
     z_offs_tail = Input(0.0)
-    x_offs_vert_tail = Input(53.0)
+    x_offs_vert_tail = Input(46.0)
     z_offs_vert_tail = Input(0.0)
     show_constraints = Input(False)
 
-    @Part
+    nose_length = Input(12.6)
+    main_body_length = Input(31.5)
+    tail_length = Input(18.9)
+    fuselage_radius = Input(2.829)
+
+    @Part(parse=False)
     def aircraft(self):
         return Aircraft(
             fuselage_file=self.fuselage_file,
@@ -47,6 +52,10 @@ class AreaRule(Base):
             x_offs_vert_tail=self.x_offs_vert_tail,
             z_offs_vert_tail=self.z_offs_vert_tail,
             show_constraints=self.show_constraints,
+            nose_length=self.nose_length,
+            main_body_length=self.main_body_length,
+            tail_length=self.tail_length,
+            fuselage_radius=self.fuselage_radius
         )
 
 
