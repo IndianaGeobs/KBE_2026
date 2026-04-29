@@ -87,9 +87,14 @@ class InputsPanel(Component):
 
     def render(self) -> NodeType:
         def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key, include_title=True):
-            """Helper function for lifting surfaces with optional title"""
+            """Helper function for lifting surfaces using Sliders for proportional placement"""
+
+            # Get current values as floats for the sliders
+            curr_x = float(getattr(self, x_offset))
+            curr_z = float(getattr(self, z_offset))
+
             section = [
-                layout.Box(style={"display": "flex", "alignItems": "center"})[
+                layout.Box(style={"display": "flex", "alignItems": "center", "marginBottom": "1em"})[
                     mui.Button(
                         component="label",
                         variant="outlined",
@@ -104,25 +109,44 @@ class InputsPanel(Component):
                             key=f"input-{title.lower()}-{reset_key}"
                         ),
                     ],
-                    txt,
+                    mui.Typography(variant="body2", sx={"ml": 1})[txt],
                 ],
-                mui.TextField(
-                    label="x-Offset [m]",
-                    type="number",
-                    value=getattr(self, x_offset),
-                    onChange=lambda ev: setattr(self, x_offset, ev.target.value),
-                ),
-                mui.TextField(
-                    label="z-Offset [m]",
-                    type="number",
-                    value=getattr(self, z_offset),
-                    onChange=lambda ev: setattr(self, z_offset, ev.target.value),
-                ),
-                mui.Divider(),
+
+                # --- Longitudinal Position (X) Slider ---
+                layout.Box(orientation="vertical", sx={"mb": 2})[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"{title} X-Position: {int(curr_x * 100)}% of length"
+                    ],
+                    mui.Slider(
+                        value=curr_x,
+                        min=0.0,
+                        max=1.0,
+                        step=0.01,
+                        valueLabelDisplay="auto",
+                        # Convert back to string for your app.py logic
+                        onChangeCommitted=lambda ev, val: setattr(self, x_offset, str(val))
+                    )
+                ],
+
+                # --- Vertical Position (Z) Slider ---
+                layout.Box(orientation="vertical", sx={"mb": 2})[
+                    mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                        f"{title} Z-Position: {int(curr_z * 100)}% (relative to radius)"
+                    ],
+                    mui.Slider(
+                        value=curr_z,
+                        min=-1.2,  # Allow slightly above/below fuselage
+                        max=1.2,
+                        step=0.01,
+                        valueLabelDisplay="auto",
+                        onChangeCommitted=lambda ev, val: setattr(self, z_offset, str(val))
+                    )
+                ],
+                mui.Divider(sx={"my": 1}),
             ]
 
             if include_title:
-                section = [mui.Typography(variant="h6")[title]] + section
+                section = [mui.Typography(variant="h6", sx={"mt": 1})[title]] + section
 
             return section
 

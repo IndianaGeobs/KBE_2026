@@ -40,6 +40,8 @@ class App(Component):
     last_hor_tail_file = State(AR.hor_tail_file)
     last_fuselage_file = State(AR.fuselage_file)
 
+    _total = AR.nose_length + AR.main_body_length + AR.tail_length
+
     last_x_offs_wings = State(AR.x_offs_wings)
     last_z_offs_wings = State(AR.z_offs_wings)
     last_x_offs_tail = State(AR.x_offs_tail)
@@ -60,6 +62,16 @@ class App(Component):
 
     def on_file4_uploaded(self, path):
         self.inputs_panel.pending_fuselage_file = path
+
+    # Helper functions for ratio to absolute values of lifting surfaces offsets
+
+    def _to_abs(self, x_offs, z_offs):
+        total_length = AR.nose_length + AR.main_body_length + AR.tail_length
+        return x_offs * total_length, z_offs * AR.fuselage_radius
+
+    def _to_ratio(self, x_offs, z_offs, nose, body, tail, radius):
+        return x_offs / (nose + body + tail), z_offs / radius
+
 
     def apply_changes(self, *args):
         self.applying = True
@@ -100,6 +112,15 @@ class App(Component):
                 return
 
             new_include_hor_tail = panel.pending_include_hor_tail
+
+            total_length = new_nose_length + new_body_length + new_tail_length
+
+            rx_w, rz_w = self._to_ratio(new_x_offs_wings, new_z_offs_wings, new_nose_length, new_body_length,
+                                        new_tail_length, new_radius)
+            rx_t, rz_t = self._to_ratio(new_x_offs_tail, new_z_offs_tail, new_nose_length, new_body_length,
+                                        new_tail_length, new_radius)
+            rx_v, rz_v = self._to_ratio(new_x_offs_vert, new_z_offs_vert, new_nose_length, new_body_length,
+                                        new_tail_length, new_radius)
 
             try:
                 from area_rule import AreaRule
@@ -313,6 +334,13 @@ class App(Component):
         AR.x_offs_vert_tail = new_x_offs_vert
         AR.z_offs_vert_tail = new_z_offs_vert
 
+        self.last_x_offs_wings = new_x_offs_wings
+        self.last_z_offs_wings = new_z_offs_wings
+        self.last_x_offs_tail = new_x_offs_tail
+        self.last_z_offs_tail = new_z_offs_tail
+        self.last_x_offs_vert_tail = new_x_offs_vert
+        self.last_z_offs_vert_tail = new_z_offs_vert
+
         AR.nose_length = new_nose_length
         AR.main_body_length = new_body_length
         AR.tail_length = new_tail_length
@@ -322,12 +350,6 @@ class App(Component):
         self.last_vert_tail_file = AR.vert_tail_file
         self.last_hor_tail_file = AR.hor_tail_file
         self.last_fuselage_file = AR.fuselage_file
-        self.last_x_offs_wings = AR.x_offs_wings
-        self.last_z_offs_wings = AR.z_offs_wings
-        self.last_x_offs_tail = AR.x_offs_tail
-        self.last_z_offs_tail = AR.z_offs_tail
-        self.last_x_offs_vert_tail = AR.x_offs_vert_tail
-        self.last_z_offs_vert_tail = AR.z_offs_vert_tail
 
         self._clear_all_error_flags(panel)
 
