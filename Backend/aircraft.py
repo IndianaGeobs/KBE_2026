@@ -1,5 +1,5 @@
 import os
-from parapy.geom import GeomBase
+from parapy.geom import GeomBase, Circle, translate, YOZ, Cylinder, Compound, Position, Point
 from parapy.core import Input, Part, action, Attribute
 
 # 1. BUILD THE ABSOLUTE PATHS HERE
@@ -49,6 +49,8 @@ class Aircraft(GeomBase):
     tail_length = Input(18.9)
     fuselage_radius = Input(2.829)
 
+    user_constraints = Input([])
+
     @Part
     def geometry(self):
         """Manages all geometric components."""
@@ -72,14 +74,75 @@ class Aircraft(GeomBase):
             fuselage_radius=self.fuselage_radius
         )
 
-    @Part
+    @Part(parse=False)
+    def constraint_visualizers(self):
+        """Draws bright magenta solid bands, mirroring the 'Flat Top' geometric rule of the tail."""
+        total_length = self.nose_length + self.main_body_length + self.tail_length
+
+        # Calculate exactly where the tail starts as a percentage
+        tail_start_pct = (self.nose_length + self.main_body_length) / total_length
+
+        xs = getattr(self.fuselage_data, 'xs', [])
+        radii = getattr(self.fuselage_data, 'radii', [])
+
+        def get_local_radius(x_pct, r_pct):
+            target_x = x_pct * total_length
+            safe_len = min(len(xs), len(radii))
+            if safe_len == 0:
+                return 1.0
+
+            idx = min(range(safe_len), key=lambda i: abs(xs[i] - target_x))
+            result = r_pct * radii[idx]
+            return result if result > 0 else 1.0
+
+        def get_flat_top_z(x_pct, local_radius):
+            """
+            Mirrors the exact math from GeometryManager's cross_sections!
+            If we are in the tail, shift UP by (Master Radius - Local Radius)
+            """
+            if x_pct > tail_start_pct:
+                return self.fuselage_radius - local_radius
+            return 0.0
+
+        cylinders = []
+        for c in self.user_constraints:
+            x_pct = c["x_pct"]
+            r_pct = c.get("r_pct", 0.5)
+
+            # 1. Find the physical radius of the magenta cylinder
+            actual_radius = get_local_radius(x_pct, r_pct)
+
+            # 2. Guard against zero/negative radius
+            if actual_radius <= 0:
+                continue
+
+            # 3. Find the geometric Z-shift using the Flat Top rule
+            z_shift = get_flat_top_z(x_pct, actual_radius)
+
+            cylinders.append(
+                Cylinder(
+                    radius=actual_radius,
+                    height=0.4,
+                    position=translate(
+                        YOZ,
+                        "z", (x_pct * total_length) - 0.2,
+                        "y", z_shift
+                    ),
+                    color="magenta"
+                )
+            )
+
+        return Compound(built_from=cylinders) if cylinders else Compound(built_from=[])
+
+    @Part(parse=False)
     def fuselage_data(self):
         return FuselageDataManager(
             geometry_manager=self.geometry,
             nose_length=self.nose_length,
             main_body_length=self.main_body_length,
             tail_length=self.tail_length,
-            fuselage_radius=self.fuselage_radius
+            fuselage_radius=self.fuselage_radius,
+            user_constraints = self.user_constraints
         )
 
     @Part

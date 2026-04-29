@@ -367,25 +367,25 @@
         },
         {
             "station": 12.64214047,
-            "nominal_radius": 2.824,
+            "nominal_radius": 2.829,
             "min_radius": 2.6828,
             "max_radius": 5.0
         },
         {
             "station": 12.85284281,
-            "nominal_radius": 2.826,
+            "nominal_radius": 2.829,
             "min_radius": 2.6847,
             "max_radius": 5.0
         },
         {
             "station": 13.06354515,
-            "nominal_radius": 2.827,
+            "nominal_radius": 2.829,
             "min_radius": 2.68565,
             "max_radius": 5.0
         },
         {
             "station": 13.27424749,
-            "nominal_radius": 2.828,
+            "nominal_radius": 2.829,
             "min_radius": 2.6866,
             "max_radius": 5.0
         },
@@ -1147,655 +1147,655 @@
         },
         {
             "station": 40.03344482,
-            "nominal_radius": 2.828,
+            "nominal_radius": 2.829,
             "min_radius": 2.6866,
             "max_radius": 5.0
         },
         {
             "station": 40.24414716,
-            "nominal_radius": 2.827,
+            "nominal_radius": 2.829,
             "min_radius": 2.68565,
             "max_radius": 5.0
         },
         {
             "station": 40.4548495,
-            "nominal_radius": 2.826,
+            "nominal_radius": 2.829,
             "min_radius": 2.6847,
             "max_radius": 5.0
         },
         {
             "station": 40.66555184,
-            "nominal_radius": 2.825,
+            "nominal_radius": 2.829,
             "min_radius": 2.68375,
             "max_radius": 5.0
         },
         {
             "station": 40.87625418,
-            "nominal_radius": 2.823,
+            "nominal_radius": 2.829,
             "min_radius": 2.68185,
             "max_radius": 5.0
         },
         {
             "station": 41.08695652,
-            "nominal_radius": 2.821,
+            "nominal_radius": 2.829,
             "min_radius": 2.67995,
             "max_radius": 5.0
         },
         {
             "station": 41.29765886,
-            "nominal_radius": 2.819,
+            "nominal_radius": 2.829,
             "min_radius": 2.67805,
             "max_radius": 5.0
         },
         {
             "station": 41.5083612,
-            "nominal_radius": 2.817,
+            "nominal_radius": 2.829,
             "min_radius": 2.67615,
             "max_radius": 5.0
         },
         {
             "station": 41.71906355,
-            "nominal_radius": 2.814,
+            "nominal_radius": 2.829,
             "min_radius": 2.6733,
             "max_radius": 5.0
         },
         {
             "station": 41.92976589,
-            "nominal_radius": 2.811,
+            "nominal_radius": 2.829,
             "min_radius": 2.67045,
             "max_radius": 5.0
         },
         {
             "station": 42.14046823,
-            "nominal_radius": 2.808,
+            "nominal_radius": 2.829,
             "min_radius": 2.6676,
             "max_radius": 5.0
         },
         {
             "station": 42.35117057,
-            "nominal_radius": 2.804,
+            "nominal_radius": 2.829,
             "min_radius": 2.6638,
             "max_radius": 5.0
         },
         {
             "station": 42.56187291,
-            "nominal_radius": 2.801,
+            "nominal_radius": 2.829,
             "min_radius": 2.66095,
             "max_radius": 5.0
         },
         {
             "station": 42.77257525,
-            "nominal_radius": 2.796,
+            "nominal_radius": 2.829,
             "min_radius": 2.6562,
             "max_radius": 5.0
         },
         {
             "station": 42.98327759,
-            "nominal_radius": 2.792,
+            "nominal_radius": 2.829,
             "min_radius": 2.6524,
             "max_radius": 5.0
         },
         {
             "station": 43.19397993,
-            "nominal_radius": 2.787,
+            "nominal_radius": 2.829,
             "min_radius": 2.64765,
             "max_radius": 5.0
         },
         {
             "station": 43.40468227,
-            "nominal_radius": 2.782,
+            "nominal_radius": 2.829,
             "min_radius": 2.6429,
             "max_radius": 5.0
         },
         {
             "station": 43.61538462,
-            "nominal_radius": 2.776,
+            "nominal_radius": 2.829,
             "min_radius": 2.6372,
             "max_radius": 5.0
         },
         {
             "station": 43.82608696,
-            "nominal_radius": 2.77,
+            "nominal_radius": 2.829,
             "min_radius": 2.6315,
             "max_radius": 5.0
         },
         {
             "station": 44.0367893,
-            "nominal_radius": 2.764,
+            "nominal_radius": 2.829,
             "min_radius": 2.6258,
             "max_radius": 5.0
         },
         {
             "station": 44.24749164,
-            "nominal_radius": 2.757,
+            "nominal_radius": 2.829,
             "min_radius": 2.61915,
             "max_radius": 5.0
         },
         {
             "station": 44.45819398,
-            "nominal_radius": 2.75,
+            "nominal_radius": 2.822,
             "min_radius": 2.6125,
             "max_radius": 5.0
         },
         {
             "station": 44.66889632,
-            "nominal_radius": 2.743,
+            "nominal_radius": 2.815,
             "min_radius": 2.60585,
             "max_radius": 5.0
         },
         {
             "station": 44.87959866,
-            "nominal_radius": 2.735,
+            "nominal_radius": 2.806,
             "min_radius": 2.59825,
             "max_radius": 5.0
         },
         {
             "station": 45.090301,
-            "nominal_radius": 2.726,
+            "nominal_radius": 2.797,
             "min_radius": 2.5897,
             "max_radius": 5.0
         },
         {
             "station": 45.30100334,
-            "nominal_radius": 2.718,
+            "nominal_radius": 2.789,
             "min_radius": 2.5821,
             "max_radius": 5.0
         },
         {
             "station": 45.51170569,
-            "nominal_radius": 2.709,
+            "nominal_radius": 2.78,
             "min_radius": 2.57355,
             "max_radius": 5.0
         },
         {
             "station": 45.72240803,
-            "nominal_radius": 2.699,
+            "nominal_radius": 2.769,
             "min_radius": 2.56405,
             "max_radius": 5.0
         },
         {
             "station": 45.93311037,
-            "nominal_radius": 2.689,
+            "nominal_radius": 2.759,
             "min_radius": 2.55455,
             "max_radius": 5.0
         },
         {
             "station": 46.14381271,
-            "nominal_radius": 2.679,
+            "nominal_radius": 2.749,
             "min_radius": 2.54505,
             "max_radius": 5.0
         },
         {
             "station": 46.35451505,
-            "nominal_radius": 2.668,
+            "nominal_radius": 2.738,
             "min_radius": 2.5346,
             "max_radius": 5.0
         },
         {
             "station": 46.56521739,
-            "nominal_radius": 2.657,
+            "nominal_radius": 2.726,
             "min_radius": 2.52415,
             "max_radius": 5.0
         },
         {
             "station": 46.77591973,
-            "nominal_radius": 2.645,
+            "nominal_radius": 2.714,
             "min_radius": 2.51275,
             "max_radius": 5.0
         },
         {
             "station": 46.98662207,
-            "nominal_radius": 2.633,
+            "nominal_radius": 2.702,
             "min_radius": 2.50135,
             "max_radius": 5.0
         },
         {
             "station": 47.19732441,
-            "nominal_radius": 2.62,
+            "nominal_radius": 2.688,
             "min_radius": 2.489,
             "max_radius": 5.0
         },
         {
             "station": 47.40802676,
-            "nominal_radius": 2.607,
+            "nominal_radius": 2.675,
             "min_radius": 2.47665,
             "max_radius": 5.0
         },
         {
             "station": 47.6187291,
-            "nominal_radius": 2.593,
+            "nominal_radius": 2.661,
             "min_radius": 2.46335,
             "max_radius": 5.0
         },
         {
             "station": 47.82943144,
-            "nominal_radius": 2.579,
+            "nominal_radius": 2.646,
             "min_radius": 2.45005,
             "max_radius": 5.0
         },
         {
             "station": 48.04013378,
-            "nominal_radius": 2.565,
+            "nominal_radius": 2.632,
             "min_radius": 2.43675,
             "max_radius": 5.0
         },
         {
             "station": 48.25083612,
-            "nominal_radius": 2.55,
+            "nominal_radius": 2.617,
             "min_radius": 2.4225,
             "max_radius": 5.0
         },
         {
             "station": 48.46153846,
-            "nominal_radius": 2.534,
+            "nominal_radius": 2.6,
             "min_radius": 2.4073,
             "max_radius": 5.0
         },
         {
             "station": 48.6722408,
-            "nominal_radius": 2.518,
+            "nominal_radius": 2.584,
             "min_radius": 2.3921,
             "max_radius": 5.0
         },
         {
             "station": 48.88294314,
-            "nominal_radius": 2.502,
+            "nominal_radius": 2.567,
             "min_radius": 2.3769,
             "max_radius": 5.0
         },
         {
             "station": 49.09364548,
-            "nominal_radius": 2.484,
+            "nominal_radius": 2.549,
             "min_radius": 2.3598,
             "max_radius": 5.0
         },
         {
             "station": 49.30434783,
-            "nominal_radius": 2.467,
+            "nominal_radius": 2.531,
             "min_radius": 2.34365,
             "max_radius": 5.0
         },
         {
             "station": 49.51505017,
-            "nominal_radius": 2.449,
+            "nominal_radius": 2.513,
             "min_radius": 2.32655,
             "max_radius": 5.0
         },
         {
             "station": 49.72575251,
-            "nominal_radius": 2.43,
+            "nominal_radius": 2.493,
             "min_radius": 2.3085,
             "max_radius": 5.0
         },
         {
             "station": 49.93645485,
-            "nominal_radius": 2.411,
+            "nominal_radius": 2.474,
             "min_radius": 2.29045,
             "max_radius": 5.0
         },
         {
             "station": 50.14715719,
-            "nominal_radius": 2.391,
+            "nominal_radius": 2.453,
             "min_radius": 2.27145,
             "max_radius": 5.0
         },
         {
             "station": 50.35785953,
-            "nominal_radius": 2.371,
+            "nominal_radius": 2.433,
             "min_radius": 2.25245,
             "max_radius": 5.0
         },
         {
             "station": 50.56856187,
-            "nominal_radius": 2.35,
+            "nominal_radius": 2.411,
             "min_radius": 2.2325,
             "max_radius": 5.0
         },
         {
             "station": 50.77926421,
-            "nominal_radius": 2.329,
+            "nominal_radius": 2.39,
             "min_radius": 2.21255,
             "max_radius": 5.0
         },
         {
             "station": 50.98996656,
-            "nominal_radius": 2.307,
+            "nominal_radius": 2.367,
             "min_radius": 2.19165,
             "max_radius": 5.0
         },
         {
             "station": 51.2006689,
-            "nominal_radius": 2.285,
+            "nominal_radius": 2.345,
             "min_radius": 2.17075,
             "max_radius": 5.0
         },
         {
             "station": 51.41137124,
-            "nominal_radius": 2.262,
+            "nominal_radius": 2.321,
             "min_radius": 2.1489,
             "max_radius": 5.0
         },
         {
             "station": 51.62207358,
-            "nominal_radius": 2.238,
+            "nominal_radius": 2.296,
             "min_radius": 2.1261,
             "max_radius": 5.0
         },
         {
             "station": 51.83277592,
-            "nominal_radius": 2.214,
+            "nominal_radius": 2.272,
             "min_radius": 2.1033,
             "max_radius": 5.0
         },
         {
             "station": 52.04347826,
-            "nominal_radius": 2.19,
+            "nominal_radius": 2.247,
             "min_radius": 2.0805,
             "max_radius": 5.0
         },
         {
             "station": 52.2541806,
-            "nominal_radius": 2.164,
+            "nominal_radius": 2.22,
             "min_radius": 2.0558,
             "max_radius": 5.0
         },
         {
             "station": 52.46488294,
-            "nominal_radius": 2.139,
+            "nominal_radius": 2.195,
             "min_radius": 2.03205,
             "max_radius": 5.0
         },
         {
             "station": 52.67558528,
-            "nominal_radius": 2.112,
+            "nominal_radius": 2.167,
             "min_radius": 2.0064,
             "max_radius": 5.0
         },
         {
             "station": 52.88628763,
-            "nominal_radius": 2.085,
+            "nominal_radius": 2.139,
             "min_radius": 1.98075,
             "max_radius": 5.0
         },
         {
             "station": 53.09698997,
-            "nominal_radius": 2.058,
+            "nominal_radius": 2.112,
             "min_radius": 1.9551,
             "max_radius": 5.0
         },
         {
             "station": 53.30769231,
-            "nominal_radius": 2.03,
+            "nominal_radius": 2.083,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 53.51839465,
-            "nominal_radius": 2.001,
+            "nominal_radius": 2.053,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 53.72909699,
-            "nominal_radius": 1.972,
+            "nominal_radius": 2.023,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 53.93979933,
-            "nominal_radius": 1.942,
+            "nominal_radius": 1.993,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 54.15050167,
-            "nominal_radius": 1.912,
+            "nominal_radius": 1.962,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 54.36120401,
-            "nominal_radius": 1.881,
+            "nominal_radius": 1.93,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 54.57190635,
-            "nominal_radius": 1.849,
+            "nominal_radius": 1.897,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 54.7826087,
-            "nominal_radius": 1.817,
+            "nominal_radius": 1.864,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 54.99331104,
-            "nominal_radius": 1.784,
+            "nominal_radius": 1.831,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 55.20401338,
-            "nominal_radius": 1.751,
+            "nominal_radius": 1.797,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 55.41471572,
-            "nominal_radius": 1.717,
+            "nominal_radius": 1.762,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 55.62541806,
-            "nominal_radius": 1.683,
+            "nominal_radius": 1.727,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 55.8361204,
-            "nominal_radius": 1.648,
+            "nominal_radius": 1.691,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 56.04682274,
-            "nominal_radius": 1.612,
+            "nominal_radius": 1.654,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 56.25752508,
-            "nominal_radius": 1.576,
+            "nominal_radius": 1.617,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 56.46822742,
-            "nominal_radius": 1.539,
+            "nominal_radius": 1.579,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 56.67892977,
-            "nominal_radius": 1.501,
+            "nominal_radius": 1.54,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 56.88963211,
-            "nominal_radius": 1.463,
+            "nominal_radius": 1.501,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 57.10033445,
-            "nominal_radius": 1.425,
+            "nominal_radius": 1.462,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 57.31103679,
-            "nominal_radius": 1.386,
+            "nominal_radius": 1.422,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 57.52173913,
-            "nominal_radius": 1.346,
+            "nominal_radius": 1.381,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 57.73244147,
-            "nominal_radius": 1.306,
+            "nominal_radius": 1.34,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 57.94314381,
-            "nominal_radius": 1.265,
+            "nominal_radius": 1.298,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 58.15384615,
-            "nominal_radius": 1.223,
+            "nominal_radius": 1.255,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 58.36454849,
-            "nominal_radius": 1.181,
+            "nominal_radius": 1.212,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 58.57525084,
-            "nominal_radius": 1.138,
+            "nominal_radius": 1.168,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 58.78595318,
-            "nominal_radius": 1.095,
+            "nominal_radius": 1.124,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 58.99665552,
-            "nominal_radius": 1.052,
+            "nominal_radius": 1.079,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 59.20735786,
-            "nominal_radius": 1.007,
+            "nominal_radius": 1.033,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 59.4180602,
-            "nominal_radius": 0.962,
+            "nominal_radius": 0.987,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 59.62876254,
-            "nominal_radius": 0.917,
+            "nominal_radius": 0.941,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 59.83946488,
-            "nominal_radius": 0.871,
+            "nominal_radius": 0.894,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 60.05016722,
-            "nominal_radius": 0.824,
+            "nominal_radius": 0.846,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 60.26086957,
-            "nominal_radius": 0.777,
+            "nominal_radius": 0.797,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 60.47157191,
-            "nominal_radius": 0.73,
+            "nominal_radius": 0.749,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 60.68227425,
-            "nominal_radius": 0.681,
+            "nominal_radius": 0.699,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 60.89297659,
-            "nominal_radius": 0.633,
+            "nominal_radius": 0.65,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 61.10367893,
-            "nominal_radius": 0.583,
+            "nominal_radius": 0.598,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 61.31438127,
-            "nominal_radius": 0.534,
+            "nominal_radius": 0.548,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 61.52508361,
-            "nominal_radius": 0.483,
+            "nominal_radius": 0.496,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 61.73578595,
-            "nominal_radius": 0.432,
+            "nominal_radius": 0.443,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 61.94648829,
-            "nominal_radius": 0.381,
+            "nominal_radius": 0.391,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 62.15719064,
-            "nominal_radius": 0.315,
+            "nominal_radius": 0.323,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 62.36789298,
-            "nominal_radius": 0.24,
+            "nominal_radius": 0.246,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 62.57859532,
-            "nominal_radius": 0.17,
+            "nominal_radius": 0.174,
             "min_radius": 0.0,
             "max_radius": 5.0
         },
         {
             "station": 62.78929766,
-            "nominal_radius": 0.1,
+            "nominal_radius": 0.103,
             "min_radius": 0.0,
             "max_radius": 5.0
         },

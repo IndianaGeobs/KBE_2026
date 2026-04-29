@@ -1,6 +1,6 @@
 import os
 from parapy.webgui import layout, html, mui
-from parapy.webgui.core import Component, NodeType, FileUpload, Prop, State
+from parapy.webgui.core import Component, NodeType, FileUpload, Prop, State, update
 
 from area_rule import AR
 
@@ -36,6 +36,8 @@ class InputsPanel(Component):
     pending_fuselage_radius = State("2.829")
 
     pending_include_hor_tail = State(AR.include_hor_tail)
+
+    pending_user_constraints = State([])
 
     # Reset keys to force file input re-render
     reset_key1 = State(0)
@@ -74,6 +76,30 @@ class InputsPanel(Component):
 
         setattr(self, state_var, new_path)
         getattr(self, callback)(new_path)
+
+
+    # Constraints helper functions
+    def add_constraint(self, *args):
+        new_list = list(self.pending_user_constraints)
+        new_list.append({"x_pct": 0.5, "r_pct": 0.5})
+        self.pending_user_constraints = new_list
+        AR.user_constraints = new_list
+        update()
+
+    def remove_constraint(self, idx):
+        new_list = list(self.pending_user_constraints)
+        new_list.pop(idx)
+        self.pending_user_constraints = new_list
+        AR.user_constraints = new_list
+        update()
+
+    def update_constraint(self, idx, key, val):
+        new_list = list(self.pending_user_constraints)
+        new_list[idx] = dict(new_list[idx])
+        new_list[idx][key] = val
+        self.pending_user_constraints = new_list
+        AR.user_constraints = new_list
+        update()
 
     def toggle_horizontal(self, event, checked: bool) -> None:
         self.pending_include_hor_tail = checked
@@ -149,6 +175,30 @@ class InputsPanel(Component):
                 section = [mui.Typography(variant="h6", sx={"mt": 1})[title]] + section
 
             return section
+
+        def render_constraint_box(i, c):
+            return layout.Box(
+                key=f"constraint_box_{i}",  # Unique key prevents React from confusing sliders
+                style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px", "marginTop": "10px"}
+            )[
+                mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                    f"Constraint {i + 1} X-Position: {int(c['x_pct'] * 100)}%"],
+                mui.Slider(
+                    value=c['x_pct'], min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
+                    onChangeCommitted=lambda ev, val: self.update_constraint(i, 'x_pct', float(val))
+                ),
+
+                mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                    f"Constraint {i + 1} Min Radius: {int(c.get('r_pct', 0.5) * 100)}% of local fuselage"],
+                mui.Slider(
+                    value=c.get('r_pct', 0.5), min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
+                    onChangeCommitted=lambda ev, val: self.update_constraint(i, 'r_pct', float(val))
+                ),
+
+                layout.Box(h_align="right")[
+                    mui.Button(color="error", size="small", onClick=lambda ev: self.remove_constraint(i))["Remove"]
+                ]
+            ]
 
         def get_filename(pending_file, busy):
             """Get filename from pending state with upload indicator"""
@@ -240,13 +290,18 @@ class InputsPanel(Component):
                         f"Fuselage Radius: {self.pending_fuselage_radius} m"],
                     mui.Slider(
                         value=float(self.pending_fuselage_radius),
-                        min=1.0,
-                        max=5.0,
-                        step=0.01,
-                        valueLabelDisplay="auto",
+                        min=1.0, max=5.0, step=0.01, valueLabelDisplay="auto",
                         onChangeCommitted=lambda ev, val: setattr(self, "pending_fuselage_radius", str(val))
                     )
-                ]
+                ],
+
+                mui.Divider(sx={"my": 1}),
+
+                    # --- USER DEFINED CONSTRAINTS ---
+                mui.Typography(variant="subtitle2")["Minimum Radius Constraints"],
+                mui.Button(variant="outlined", size="small", onClick=self.add_constraint)["+ Add Constraint"],
+
+                *[render_constraint_box(i, c) for i, c in enumerate(self.pending_user_constraints)]
             ],
 
             mui.Divider(),

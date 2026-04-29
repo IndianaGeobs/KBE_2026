@@ -140,7 +140,8 @@ class App(Component):
                     nose_length=new_nose_length,
                     main_body_length=new_body_length,
                     tail_length=new_tail_length,
-                    fuselage_radius = new_radius
+                    fuselage_radius = new_radius,
+                    user_constraints=panel.pending_user_constraints
                 )
 
                 fuselage_reading_error = temp_AR.aircraft.intersection_checker.fuselage_reading_error_status
@@ -334,6 +335,9 @@ class App(Component):
         AR.x_offs_vert_tail = new_x_offs_vert
         AR.z_offs_vert_tail = new_z_offs_vert
 
+        AR.user_constraints = panel.pending_user_constraints
+        self.last_user_constraints = AR.user_constraints
+
         self.last_x_offs_wings = new_x_offs_wings
         self.last_z_offs_wings = new_z_offs_wings
         self.last_x_offs_tail = new_x_offs_tail
@@ -350,6 +354,7 @@ class App(Component):
         self.last_vert_tail_file = AR.vert_tail_file
         self.last_hor_tail_file = AR.hor_tail_file
         self.last_fuselage_file = AR.fuselage_file
+
 
         self._clear_all_error_flags(panel)
 
@@ -667,9 +672,9 @@ class App(Component):
                         ],
 
                         mui.Button(variant="contained", onClick=self.run_calculation)["Optimize Geometry"],
-                        mui.Button(variant="outlined", onClick=self.toggle_constraints, color="error")[
-                            "Hide Constraints" if AR.show_constraints else "Show Constraints"
-                        ],
+                        #mui.Button(variant="outlined", onClick=self.toggle_constraints, color="error")[
+                        #    "Hide Constraints" if AR.show_constraints else "Show Constraints"
+                        #],
                         mui.Dialog(open=self.busy)[
                             layout.Box(orientation="vertical", v_align="center", h_align="center")[
                                 mui.CircularProgress, mui.Typography(variant="h4")["Running optimization"],
@@ -682,6 +687,7 @@ class App(Component):
                             AR.aircraft.fuselage,
                             AR.aircraft.vert_tail,
                             AR.aircraft.hor_tail,
+                            AR.aircraft.constraint_visualizers
                         ]
                     ),
                 ],
@@ -860,6 +866,7 @@ class App(Component):
                         AR.aircraft.optimized_results.new_fuselage,
                         AR.aircraft.optimized_results.vert_tail,
                         AR.aircraft.optimized_results.hor_tail,
+                        AR.aircraft.constraint_visualizers
                     ]
                 ),
                 layout.Box(orientation="horizontal",

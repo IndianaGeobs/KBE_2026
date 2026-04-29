@@ -99,7 +99,8 @@ class GeometryManager(GeomBase):
             shape_in=self.nose.solid,
             tool=[self.main_body.solid, self.tail.solid],
             color="gray",
-            line_thickness=1e-9
+            line_thickness=1e-9,
+            transparency=0.7
         )
 
     @Part

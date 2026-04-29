@@ -16,7 +16,6 @@ DEF_HT = os.path.join(FILES_DIR, "hor_tail_default.txt")
 
 class AreaRule(Base):
     """AreaRule: live aircraft parameters"""
-    # UPDATE THESE INPUTS:
     fuselage_file = Input(DEF_FUS)
     wing_file = Input(DEF_WING)
     vert_tail_file = Input(DEF_VT)
@@ -37,6 +36,8 @@ class AreaRule(Base):
     tail_length = Input(18.9)
     fuselage_radius = Input(2.829)
 
+    user_constraints = Input([])
+
     @Part(parse=False)
     def aircraft(self):
         total = self.nose_length + self.main_body_length + self.tail_length
@@ -56,7 +57,8 @@ class AreaRule(Base):
             nose_length=self.nose_length,
             main_body_length=self.main_body_length,
             tail_length=self.tail_length,
-            fuselage_radius=self.fuselage_radius
+            fuselage_radius=self.fuselage_radius,
+            user_constraints = self.user_constraints
         )
 
 
