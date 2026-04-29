@@ -14,8 +14,8 @@ class FuselageDataManager(GeomBase):
 
     @Attribute
     def sections_number(self):
-        # We access the first element of the tuple returned by sliced_data
-        return len(self.geometry_manager.nose.sliced_data[0])
+        """Total number of data points across the whole aircraft."""
+        return len(self.xs)
 
     @Attribute
     def length(self):
@@ -24,34 +24,20 @@ class FuselageDataManager(GeomBase):
     @Attribute
     def xs(self):
         """The combined X-stations for the whole aircraft."""
-        # sliced_data[0] is the X list, sliced_data[1] is the R list
         nose_xs = self.geometry_manager.nose.sliced_data[0]
+        # Shift body stations by nose length
         body_xs = [x + self.nose_length for x in self.geometry_manager.main_body.sliced_data[0]]
+        # Shift tail stations by nose + body length
         tail_xs = [x + self.nose_length + self.main_body_length for x in self.geometry_manager.tail.sliced_data[0]]
         return nose_xs + body_xs + tail_xs
 
-    @Attribute
-    def zs(self):
-        """The combined Z-elevations (camber) for the whole aircraft."""
-        try:
-            # Grab the 3rd index [2] from the sliced data
-            nose_zs = self.geometry_manager.nose.sliced_data[2]
-            body_zs = self.geometry_manager.main_body.sliced_data[2]
-            tail_zs = self.geometry_manager.tail.sliced_data[2]
-
-            # Just glue the lists together (no length addition needed for vertical Z)
-            return nose_zs + body_zs + tail_zs
-
-        except IndexError:
-            # FAILSAFE: If your parser was strictly written to only keep [0] and [1]
-            # and it threw away the Z data, this prevents a crash and defaults to 0.0
-            return [0.0] * len(self.xs)
 
     @Attribute
     def radii(self):
         """Combined list of fuselage radii at each station."""
         return self.geometry_manager.nose.sliced_data[1] + \
-               self.geometry_manager.main_body.sliced_data[1]
+            self.geometry_manager.main_body.sliced_data[1] + \
+            self.geometry_manager.tail.sliced_data[1]
 
     @Attribute
     def min_radii(self):

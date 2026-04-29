@@ -42,15 +42,6 @@ class GeometryManager(GeomBase):
     x_offs_vert_tail = Input()
     z_offs_vert_tail = Input()
 
-    '''@Part
-    def fuselage(self):
-        """Reads station‐&‐radius data from fuselage file."""
-        return Fuselage(
-            fuselage_file=self.fuselage_file,
-            show_constraints=self.show_constraints,
-            color="Gray",
-        )'''
-
     @Attribute
     def raw_fuselage_tuple(self):
         """One central place to load the data for all sections."""

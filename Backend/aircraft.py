@@ -1,5 +1,5 @@
 import os
-from parapy.geom import GeomBase, Circle, translate, YOZ, Cylinder, Compound, Position, Point
+from parapy.geom import GeomBase, translate, YOZ, Cylinder, Compound, Position, Point
 from parapy.core import Input, Part, action, Attribute
 
 # 1. BUILD THE ABSOLUTE PATHS HERE
@@ -257,7 +257,7 @@ class Aircraft(GeomBase):
         self.optimized_results.step_file_optimized_fuselage()
         self.optimized_results.step_file_optimized_aircraft()
 
-    # Convenience properties
+    # Convenience properties (Do we need them?)
     @Attribute
     def fuselage(self):
         return self.geometry.fuselage_solid

@@ -683,10 +683,10 @@ class App(Component):
                     ],
                     viewer.Viewer(
                         objects=[
-                            AR.aircraft.wings_pair,
+                            AR.aircraft.wings_less_fuselage,
                             AR.aircraft.fuselage,
-                            AR.aircraft.vert_tail,
-                            AR.aircraft.hor_tail,
+                            AR.aircraft.vert_tail_less_fuselage,
+                            AR.aircraft.hor_tail_less_fuselage,
                             AR.aircraft.constraint_visualizers
                         ]
                     ),
