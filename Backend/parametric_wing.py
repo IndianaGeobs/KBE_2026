@@ -16,7 +16,7 @@ class ParametricWing(GeomBase):
     # Parametric Geometry Inputs
     dihedral = Input(5.0)
     root_chord = Input(4.5)
-    sections = Input([{"span": 8.0, "tip_chord": 1.5, "sweep": 25.0}])
+    sections = Input([{"span": 8.0, "tip_chord": 1.5, "sweep": 40.0}])
 
     @Attribute
     def error_lifting_surface(self):

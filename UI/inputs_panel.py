@@ -41,9 +41,9 @@ class InputsPanel(Component):
     pending_z_offs_vert_tail = State(str(AR.z_offs_vert_tail))
 
     pending_wing_dihedral = State("5.0")
-    pending_wing_root_chord = State("4.5")
+    pending_wing_root_chord = State("0.2")
     pending_wing_sections = State([
-        {"span": 8.0, "root_chord": 4.5, "tip_chord": 1.5, "sweep": 25.0}
+        {"span": 0.40, "root_chord": 0.2, "tip_chord": 0.05, "sweep": 40.0}
     ])
 
     pending_nose_length = State("12.6")
@@ -121,7 +121,8 @@ class InputsPanel(Component):
         sections = list(self.pending_wing_sections)
         if len(sections) < 3:
             last_tip = sections[-1]["tip_chord"]
-            sections.append({"span": 4.0, "root_chord": last_tip, "tip_chord": 1.0, "sweep": 30.0})
+            # Adding section with small ratios instead of massive meters
+            sections.append({"span": 0.06, "root_chord": last_tip, "tip_chord": 0.015, "sweep": 30.0})
             self.pending_wing_sections = sections
             update()
 
@@ -358,22 +359,27 @@ class InputsPanel(Component):
                                style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px",
                                       "marginTop": "10px"})[
                         mui.Typography(variant="subtitle2", sx={"mb": 1})[f"Section {i + 1}"],
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
-                            f"Root Chord: {sec['root_chord']} m (Max: {max_chord_limit}m)"],
-                        mui.Slider(value=sec['root_chord'], min=0.1, max=max_chord_limit, step=0.1,
+                            f"Root Chord: {int(sec['root_chord'] * 100)}% of Fuselage"],
+                        mui.Slider(value=sec['root_chord'], min=0.01, max=0.5, step=0.01,
                                    valueLabelDisplay="auto",
                                    onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'root_chord',
                                                                                                      float(val))),
-                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[f"Span: {sec['span']} m"],
-                        mui.Slider(value=sec['span'], min=1.0, max=20.0, step=0.1, valueLabelDisplay="auto",
+
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Span: {int(sec['span'] * 100)}% of Fuselage"],
+                        mui.Slider(value=sec['span'], min=0.01, max=0.5, step=0.01, valueLabelDisplay="auto",
                                    onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'span',
                                                                                                      float(val))),
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
-                            f"Tip Chord: {sec['tip_chord']} m (Max: {max_chord_limit}m)"],
-                        mui.Slider(value=sec['tip_chord'], min=0.1, max=max_chord_limit, step=0.1,
+                            f"Tip Chord: {int(sec['tip_chord'] * 100)}% of Fuselage"],
+                        mui.Slider(value=sec['tip_chord'], min=0.01, max=0.5, step=0.01,
                                    valueLabelDisplay="auto",
                                    onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'tip_chord',
                                                                                                      float(val))),
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"LE Sweep Angle: {sec['sweep']}°"],
                         mui.Slider(value=sec['sweep'], min=-20.0, max=60.0, step=0.5, valueLabelDisplay="auto",

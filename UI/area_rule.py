@@ -1,5 +1,5 @@
 import os
-from parapy.core import Base, Input, Part
+from parapy.core import Base, Input, Part, Attribute
 from Backend.aircraft import Aircraft
 
 # --- PATH LOGIC ---
@@ -32,8 +32,8 @@ class AreaRule(Base):
     show_constraints = Input(False)
 
     wing_dihedral = Input(5.0)
-    wing_root_chord = Input(4.5)
-    wing_sections = Input([{"span": 8.0, "tip_chord": 1.5, "sweep": 25.0}])
+    wing_root_chord_ratio = Input(0.2)
+    wing_sections_ratios = Input([{"span": 0.40, "tip_chord": 0.05, "sweep": 25.0}])
 
     nose_length = Input(12.6)
     main_body_length = Input(31.5)
@@ -64,9 +64,32 @@ class AreaRule(Base):
             fuselage_radius=self.fuselage_radius,
             user_constraints = self.user_constraints,
             wing_dihedral=self.wing_dihedral,
-            wing_root_chord=self.wing_root_chord,
-            wing_sections=self.wing_sections
+            wing_root_chord=self.actual_wing_root_chord,
+            wing_sections=self.actual_wing_sections
         )
+
+    @Attribute
+    def total_fuselage_length(self):
+        """Helper to get the full length of the plane."""
+        return self.nose_length + self.main_body_length + self.tail_length
+
+    @Attribute
+    def actual_wing_root_chord(self):
+        """Converts the ratio back into physical meters."""
+        return self.wing_root_chord_ratio * self.total_fuselage_length
+
+    @Attribute
+    def actual_wing_sections(self):
+        """Converts all section ratios back into physical meters."""
+        sections_in_meters = []
+        for sec in self.wing_sections_ratios:
+            sections_in_meters.append({
+                # Keep keys as 'span' and 'tip_chord' to match the UI dictionary!
+                "span": sec["span"] * self.total_fuselage_length,
+                "tip_chord": sec["tip_chord"] * self.total_fuselage_length,
+                "sweep": sec["sweep"]  # Angles don't scale
+            })
+        return sections_in_meters
 
 
 # Global instance shared across the web app components

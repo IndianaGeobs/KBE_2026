@@ -153,8 +153,8 @@ class App(Component):
                     fuselage_radius=new_radius,
                     user_constraints=panel.pending_user_constraints,
                     wing_dihedral=new_wing_dihedral,
-                    wing_root_chord=new_wing_root_chord,
-                    wing_sections=new_wing_sections
+                    wing_root_chord_ratio=new_wing_root_chord,
+                    wing_sections_ratios=new_wing_sections
                 )
 
                 fuselage_reading_error = temp_AR.aircraft.intersection_checker.fuselage_reading_error_status
@@ -356,8 +356,8 @@ class App(Component):
         AR.z_offs_vert_tail = new_z_offs_vert
 
         AR.wing_dihedral = new_wing_dihedral
-        AR.wing_root_chord = new_wing_root_chord
-        AR.wing_sections = new_wing_sections
+        AR.wing_root_chord_ratio = new_wing_root_chord
+        AR.wing_sections_ratios = new_wing_sections
 
         AR.user_constraints = panel.pending_user_constraints
         self.last_user_constraints = AR.user_constraints

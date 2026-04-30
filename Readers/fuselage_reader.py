@@ -9,7 +9,6 @@ def get_fuselage_data(filename, *, tol=1e-2):
     raising an error flag on any error.
     """
 
-    print(f"DEBUG: Reader is currently attempting to open: {filename}")
     error_reading_fuselage = False
 
     # If the filename is not an absolute path, force it to look in KBE_2026/Files
