@@ -17,6 +17,8 @@ from Backend.lifting_surface import LiftingSurface
 from Backend.fuselage import Fuselage
 from Readers.fuselage_reader import get_fuselage_data
 
+from Backend.parametric_wing import ParametricWing
+
 class GeometryManager(GeomBase):
     """Manages all geometric components of the aircraft."""
 
@@ -41,6 +43,10 @@ class GeometryManager(GeomBase):
     z_offs_tail = Input()
     x_offs_vert_tail = Input()
     z_offs_vert_tail = Input()
+
+    wing_dihedral = Input()
+    wing_root_chord = Input()
+    wing_sections = Input()
 
     @Attribute
     def raw_fuselage_tuple(self):
@@ -94,13 +100,16 @@ class GeometryManager(GeomBase):
             transparency=0.7
         )
 
-    @Part
+    @Part(parse=False)
     def right_wing(self):
-        return LiftingSurface(
+        return ParametricWing(
             wing_file=self.wing_file,
-            x_offset=self.x_offs_wings,
-            z_offset=self.z_offs_wings,
+            abs_x=self.x_offs_wings,
+            abs_z=self.z_offs_wings,
             is_vertical=False,
+            dihedral=self.wing_dihedral,
+            root_chord=self.wing_root_chord,
+            sections=self.wing_sections
         )
 
     @Part
@@ -114,12 +123,33 @@ class GeometryManager(GeomBase):
 
     @Part
     def wings_pair(self):
-        """Compound of left + right wing solids (before subtracting fuselage)."""
-        return Compound(built_from=[self.right_wing.solid, self.left_wing])
+        """Fuses left and right into ONE single solid. Much more robust for cutting!"""
+        return Fused(
+            shape_in=self.right_wing.solid,
+            tool=self.left_wing,
+            color="yellow",
+            transparency=0.2
+        )
 
     @Part
+    def right_wing_less_fuselage(self):
+        """Subtract the fuselage from the right wing first."""
+        return Subtracted(
+            shape_in=self.right_wing.solid,
+            tool=self.fuselage_solid,
+        )
+
+    @Part
+    def left_wing_less_fuselage(self):
+        """Subtract the fuselage from the left wing separately."""
+        return Subtracted(
+            shape_in=self.left_wing,
+            tool=self.fuselage_solid,
+        )
+
+    @Part(parse=False)
     def wings_less_fuselage(self):
-        """Subtract the fuselage from the combined wing pair."""
+        """Now we subtract from one solid instead of a compound/folder."""
         return Subtracted(
             shape_in=self.wings_pair,
             tool=self.fuselage_solid,
@@ -174,13 +204,19 @@ class GeometryManager(GeomBase):
             line_thickness=None if self.include_hor_tail else 1e-6
         )
 
-    @Part
+    @Part(parse=False)
     def hor_tail_less_fuselage(self):
-        """Subtract only the fuselage from the horizontal‐tail solid."""
-        return Subtracted(
-            shape_in=self.hor_tail if self.include_hor_tail else [],
-            tool=self.fuselage_solid,
-        )
+        """Subtract only the fuselage from the horizontal-tail solid, but ONLY if it exists."""
+        # Dynamic Part Evaluation:
+        if self.include_hor_tail:
+            return Subtracted(
+                shape_in=self.hor_tail,
+                tool=self.fuselage_solid,
+            )
+        else:
+            # If there is no horizontal tail, return an empty, hidden container
+            # so the CAD engine and the 3D Viewer don't crash trying to read a list!
+            return Compound(built_from=[], hidden=True)
 
     @Part
     def aircraft_solid(self):

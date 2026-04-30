@@ -9,7 +9,7 @@ FILES_DIR = os.path.join(parent_dir, "Files")
 
 # Use the exact same DEF variables as Aircraft
 DEF_FUS = os.path.join(FILES_DIR, "fuselage.json")  # Corrected to JSON
-DEF_WING = os.path.join(FILES_DIR, "wing_default.txt")
+DEF_WING = os.path.join(FILES_DIR, "trial_airfoil.txt")
 DEF_VT = os.path.join(FILES_DIR, "vert_tail_default.txt")
 DEF_HT = os.path.join(FILES_DIR, "hor_tail_default.txt")
 
@@ -30,6 +30,10 @@ class AreaRule(Base):
     x_offs_vert_tail = Input(0.75)
     z_offs_vert_tail = Input(0.0)
     show_constraints = Input(False)
+
+    wing_dihedral = Input(5.0)
+    wing_root_chord = Input(4.5)
+    wing_sections = Input([{"span": 8.0, "tip_chord": 1.5, "sweep": 25.0}])
 
     nose_length = Input(12.6)
     main_body_length = Input(31.5)
@@ -58,7 +62,10 @@ class AreaRule(Base):
             main_body_length=self.main_body_length,
             tail_length=self.tail_length,
             fuselage_radius=self.fuselage_radius,
-            user_constraints = self.user_constraints
+            user_constraints = self.user_constraints,
+            wing_dihedral=self.wing_dihedral,
+            wing_root_chord=self.wing_root_chord,
+            wing_sections=self.wing_sections
         )
 
 

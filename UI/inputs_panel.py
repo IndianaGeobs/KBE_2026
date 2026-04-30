@@ -30,6 +30,12 @@ class InputsPanel(Component):
     pending_x_offs_vert_tail = State(str(AR.x_offs_vert_tail))
     pending_z_offs_vert_tail = State(str(AR.z_offs_vert_tail))
 
+    pending_wing_dihedral = State("5.0")
+    pending_wing_root_chord = State("4.5")
+    pending_wing_sections = State([
+        {"span": 8.0, "root_chord": 4.5, "tip_chord": 1.5, "sweep": 25.0}
+    ])
+
     pending_nose_length = State("12.6")
     pending_main_body_length = State("31.5")
     pending_tail_length = State("18.9")
@@ -101,6 +107,43 @@ class InputsPanel(Component):
         AR.user_constraints = new_list
         update()
 
+    # Wings helper functions
+    def add_wing_section(self, *args):
+        sections = list(self.pending_wing_sections)
+        if len(sections) < 3:
+            # Grab the tip of the last section to act as the root of the new section
+            last_tip = sections[-1]["tip_chord"]
+            sections.append({"span": 4.0, "root_chord": last_tip, "tip_chord": 1.0, "sweep": 30.0})
+            self.pending_wing_sections = sections
+            update()
+
+    def remove_wing_section(self, *args):
+        sections = list(self.pending_wing_sections)
+        if len(sections) > 1:
+            sections.pop()
+            self.pending_wing_sections = sections
+            update()
+
+    def update_wing_section(self, idx, key, val):
+        sections = list(self.pending_wing_sections)
+        sections[idx] = dict(sections[idx])
+        sections[idx][key] = val
+
+        # --- SYNC LOGIC ---
+        if key == "tip_chord" and idx < len(sections) - 1:
+            sections[idx + 1] = dict(sections[idx + 1])
+            sections[idx + 1]["root_chord"] = val
+
+        elif key == "root_chord" and idx > 0:
+            sections[idx - 1] = dict(sections[idx - 1])
+            sections[idx - 1]["tip_chord"] = val
+
+        elif key == "root_chord" and idx == 0:
+            self.pending_wing_root_chord = str(val)
+
+        self.pending_wing_sections = sections
+        update()
+
     def toggle_horizontal(self, event, checked: bool) -> None:
         self.pending_include_hor_tail = checked
 
@@ -112,6 +155,16 @@ class InputsPanel(Component):
         self.reset_key4 += 1
 
     def render(self) -> NodeType:
+
+        # --- CALCULATE 60% MAXIMUM CHORD LIMIT ---
+        try:
+            total_length = float(self.pending_nose_length) + float(self.pending_main_body_length) + float(
+                self.pending_tail_length)
+        except ValueError:
+            total_length = 63.0  # Safe fallback
+
+        max_chord_limit = round(0.60 * total_length, 2)
+
         def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key, include_title=True):
             """Helper function for lifting surfaces using Sliders for proportional placement"""
 
@@ -306,12 +359,90 @@ class InputsPanel(Component):
 
             mui.Divider(),
 
-            # Wing
-            *lifting_surface_section(
-                "Wing", self.upload1, busy[0], filenames[0],
-                "pending_x_offs_wings", "pending_z_offs_wings", self.reset_key1
-            ),
+                # ==========================================
+                # MAIN WING (PARAMETRIC)
+                # ==========================================
+            mui.Typography(variant="h6", sx={"mt": 1})["Main Wing"],
 
+            layout.Box(style={"display": "flex", "alignItems": "center", "marginBottom": "1em"})[
+                mui.Button(component="label", variant="outlined", disabled=busy[0])[
+                    "Upload 2D Airfoil Data (.txt)",
+                    html.input(onChange=self.upload1.get_handler(), type="file", hidden=True,
+                               key=f"input-wing-{self.reset_key1}"),
+                ],
+                mui.Typography(variant="body2", sx={"ml": 1})[filenames[0]],
+            ],
+
+            layout.Box(orientation="vertical", sx={"mb": 2})[
+                mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                    f"Wing X-Position: {int(float(self.pending_x_offs_wings) * 100)}% of length"],
+                mui.Slider(value=float(self.pending_x_offs_wings), min=0.0, max=1.0, step=0.01,
+                           valueLabelDisplay="auto",
+                           onChangeCommitted=lambda ev, val: setattr(self, "pending_x_offs_wings", str(val)))
+            ],
+            layout.Box(orientation="vertical", sx={"mb": 2})[
+                mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                    f"Wing Z-Position: {int(float(self.pending_z_offs_wings) * 100)}% (relative)"],
+                mui.Slider(value=float(self.pending_z_offs_wings), min=-1.2, max=1.2, step=0.01,
+                           valueLabelDisplay="auto",
+                           onChangeCommitted=lambda ev, val: setattr(self, "pending_z_offs_wings", str(val)))
+            ],
+
+            mui.Divider(sx={"my": 1}),
+            mui.Typography(variant="subtitle2")["Wing Geometry (Max 3 Sections)"],
+
+            layout.Box(orientation="vertical", sx={"mt": 1, "padding": "0 10px"})[
+                mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                    f"Global Dihedral: {self.pending_wing_dihedral}°"],
+                mui.Slider(value=float(self.pending_wing_dihedral), min=-10.0, max=15.0, step=0.5,
+                           valueLabelDisplay="auto",
+                           onChangeCommitted=lambda ev, val: setattr(self, "pending_wing_dihedral", str(val))),
+            ],
+
+            layout.Box(orientation="vertical", style={"padding": "0 10px"})[
+                *[
+                    layout.Box(key=f"wing_sec_{i}",
+                               style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px",
+                                      "marginTop": "10px"})[
+                        mui.Typography(variant="subtitle2", sx={"mb": 1})[f"Section {i + 1}"],
+
+                            # --- DYNAMIC ROOT CHORD SLIDER ---
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Root Chord: {sec['root_chord']} m (Max: {max_chord_limit}m)"],
+                        mui.Slider(value=sec['root_chord'], min=0.1, max=max_chord_limit, step=0.1,
+                                   valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'root_chord',
+                                                                                                     float(val))),
+
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[f"Span: {sec['span']} m"],
+                        mui.Slider(value=sec['span'], min=1.0, max=20.0, step=0.1, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'span',
+                                                                                                     float(val))),
+
+                            # --- DYNAMIC TIP CHORD SLIDER ---
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Tip Chord: {sec['tip_chord']} m (Max: {max_chord_limit}m)"],
+                        mui.Slider(value=sec['tip_chord'], min=0.1, max=max_chord_limit, step=0.1,
+                                   valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'tip_chord',
+                                                                                                     float(val))),
+
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"LE Sweep Angle: {sec['sweep']}°"],
+                        mui.Slider(value=sec['sweep'], min=-20.0, max=60.0, step=0.5, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'sweep',
+                                                                                                     float(val))),
+                    ] for i, sec in enumerate(self.pending_wing_sections)
+                ],
+
+                layout.Box(style={"display": "flex", "gap": "10px", "marginTop": "10px"})[
+                    mui.Button(variant="outlined", size="small", onClick=self.add_wing_section,
+                               disabled=len(self.pending_wing_sections) >= 3)["+ Add Section"],
+                    mui.Button(variant="outlined", size="small", color="error", onClick=self.remove_wing_section,
+                               disabled=len(self.pending_wing_sections) <= 1)["- Remove Section"],
+                ],
+            ],
+            mui.Divider(sx={"my": 2}),
             # Vertical Tail
             *lifting_surface_section(
                 "Vertical Tail", self.upload2, busy[1], filenames[1],

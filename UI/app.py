@@ -105,6 +105,9 @@ class App(Component):
                 new_body_length = float(panel.pending_main_body_length)
                 new_tail_length = float(panel.pending_tail_length)
                 new_radius = float(panel.pending_fuselage_radius)
+                new_wing_dihedral = float(panel.pending_wing_dihedral)
+                new_wing_root_chord = float(panel.pending_wing_root_chord)
+                new_wing_sections = panel.pending_wing_sections
             except ValueError:
                 self._revert_to_last_committed(panel, old)
                 panel.error_wing = True
@@ -141,7 +144,10 @@ class App(Component):
                     main_body_length=new_body_length,
                     tail_length=new_tail_length,
                     fuselage_radius = new_radius,
-                    user_constraints=panel.pending_user_constraints
+                    user_constraints=panel.pending_user_constraints,
+                    wing_dihedral=new_wing_dihedral,
+                    wing_root_chord=new_wing_root_chord,
+                    wing_sections=new_wing_sections
                 )
 
                 fuselage_reading_error = temp_AR.aircraft.intersection_checker.fuselage_reading_error_status
@@ -165,7 +171,8 @@ class App(Component):
 
             self._apply_validated_changes(panel, old, new_x_offs_wings, new_z_offs_wings,
                                           new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
-                                          new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius)
+                                          new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius,
+                                          new_wing_dihedral, new_wing_root_chord, new_wing_sections)
         finally:
             self.applying = False
 
@@ -198,6 +205,8 @@ class App(Component):
             _ = temp_AR.aircraft.wings_pair
             _ = temp_AR.aircraft.fuselage
             _ = temp_AR.aircraft.vert_tail
+            _ = temp_AR.aircraft.wings_less_fuselage
+            _ = temp_AR.aircraft.vert_tail_less_fuselage
             if temp_AR.include_hor_tail and (panel.pending_hor_tail_file or old["hor_tail_file"]):
                 _ = temp_AR.aircraft.hor_tail
 
@@ -321,7 +330,10 @@ class App(Component):
 
     def _apply_validated_changes(self, panel, old, new_x_offs_wings, new_z_offs_wings,
                                  new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
-                                 new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius):
+                                 new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius,
+                                 new_wing_dihedral, new_wing_root_chord,
+                                 new_wing_sections):
+
         AR.wing_file = panel.pending_wing_file or old["wing_file"]
         AR.vert_tail_file = panel.pending_vert_tail_file or old["vert_tail_file"]
         AR.hor_tail_file = panel.pending_hor_tail_file or old["hor_tail_file"]
@@ -335,6 +347,12 @@ class App(Component):
         AR.x_offs_vert_tail = new_x_offs_vert
         AR.z_offs_vert_tail = new_z_offs_vert
 
+
+        AR.wing_dihedral = new_wing_dihedral
+        AR.wing_root_chord = new_wing_root_chord
+        AR.wing_sections = new_wing_sections
+
+
         AR.user_constraints = panel.pending_user_constraints
         self.last_user_constraints = AR.user_constraints
 
@@ -345,6 +363,12 @@ class App(Component):
         self.last_x_offs_vert_tail = new_x_offs_vert
         self.last_z_offs_vert_tail = new_z_offs_vert
 
+
+        self.last_wing_dihedral = new_wing_dihedral
+        self.last_wing_root_chord = new_wing_root_chord
+        self.last_wing_sections = new_wing_sections
+
+
         AR.nose_length = new_nose_length
         AR.main_body_length = new_body_length
         AR.tail_length = new_tail_length
@@ -354,7 +378,6 @@ class App(Component):
         self.last_vert_tail_file = AR.vert_tail_file
         self.last_hor_tail_file = AR.hor_tail_file
         self.last_fuselage_file = AR.fuselage_file
-
 
         self._clear_all_error_flags(panel)
 
