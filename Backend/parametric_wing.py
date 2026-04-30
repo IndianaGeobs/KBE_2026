@@ -62,8 +62,8 @@ class ParametricWing(GeomBase):
     def airfoil_curves(self):
         rib_curves = []
         current_x = self.abs_x
-        current_y = -0.05
-        current_z = self.abs_z
+        current_y = 0.0 if self.is_vertical else -0.05
+        current_z = self.abs_z if not self.is_vertical else (self.abs_z - 0.05)
 
         # Gets the Root Chord, then grabs the Tip Chord for every section added
         chords = [self.root_chord] + [sec["tip_chord"] for sec in self.sections]

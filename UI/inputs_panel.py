@@ -12,13 +12,11 @@ class InputsPanel(Component):
     on_upload3 = Prop()
     on_upload4 = Prop()
 
-    # --- NEW PROPS FOR BUTTONS ---
     on_close = Prop()
     on_apply = Prop()
     is_applying = Prop()
     on_optimize = Prop()
     is_busy = Prop()
-    # -----------------------------
 
     show_horizontal = State(True)
 
@@ -39,6 +37,14 @@ class InputsPanel(Component):
     pending_z_offs_tail = State(str(AR.z_offs_tail))
     pending_x_offs_vert_tail = State(str(AR.x_offs_vert_tail))
     pending_z_offs_vert_tail = State(str(AR.z_offs_vert_tail))
+    pending_vt_root_chord = State(0.06)
+    pending_vt_span = State(0.08)
+    pending_vt_tip_chord = State(0.03)
+    pending_vt_sweep = State(35.0)
+    pending_ht_root_chord = State(0.05)
+    pending_ht_span = State(0.06)
+    pending_ht_tip_chord = State(0.02)
+    pending_ht_sweep = State(30.0)
 
     pending_wing_dihedral = State("5.0")
     pending_wing_root_chord = State("0.2")
@@ -168,7 +174,9 @@ class InputsPanel(Component):
 
         max_chord_limit = round(0.60 * total_length, 2)
 
-        def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key, include_title=True):
+        def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key,
+                                    root_state=None, span_state=None, tip_state=None, sweep_state=None,
+                                    include_title=True):
             curr_x = float(getattr(self, x_offset))
             curr_z = float(getattr(self, z_offset))
 
@@ -195,9 +203,39 @@ class InputsPanel(Component):
                         f"{title} Z-Position: {int(curr_z * 100)}% (relative to radius)"],
                     mui.Slider(value=curr_z, min=-1.2, max=1.2, step=0.01, valueLabelDisplay="auto",
                                onChangeCommitted=lambda ev, val: setattr(self, z_offset, str(val)))
-                ],
-                mui.Divider(sx={"my": 1}),
+                ]
             ]
+
+            # --- NEW PARAMETRIC INJECTIONS ---
+            if root_state:
+                c_root = float(getattr(self, root_state))
+                c_span = float(getattr(self, span_state))
+                c_tip = float(getattr(self, tip_state))
+                c_sweep = float(getattr(self, sweep_state))
+
+                section.append(
+                    layout.Box(style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px",
+                                      "marginTop": "10px", "marginBottom": "10px"})[
+                        mui.Typography(variant="subtitle2", sx={"mb": 1})[f"{title} Geometry"],
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Root Chord: {int(c_root * 100)}%"],
+                        mui.Slider(value=c_root, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val: setattr(self, root_state, float(val))),
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Span: {int(c_span * 100)}%"],
+                        mui.Slider(value=c_span, min=0.01, max=0.4, step=0.01, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val: setattr(self, span_state, float(val))),
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[
+                            f"Tip Chord: {int(c_tip * 100)}%"],
+                        mui.Slider(value=c_tip, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val: setattr(self, tip_state, float(val))),
+                        mui.Typography(variant="caption", sx={"color": "text.secondary"})[f"LE Sweep: {c_sweep}°"],
+                        mui.Slider(value=c_sweep, min=-10.0, max=60.0, step=0.5, valueLabelDisplay="auto",
+                                   onChangeCommitted=lambda ev, val: setattr(self, sweep_state, float(val)))
+                    ]
+                )
+
+            section.append(mui.Divider(sx={"my": 1}))
             if include_title:
                 section = [mui.Typography(variant="h6", sx={"mt": 1})[title]] + section
             return section
@@ -396,16 +434,24 @@ class InputsPanel(Component):
             ],
             mui.Divider(sx={"my": 2}),
 
-            *lifting_surface_section("Vertical Tail", self.upload2, busy[1], filenames[1], "pending_x_offs_vert_tail",
-                                     "pending_z_offs_vert_tail", self.reset_key2),
+            *lifting_surface_section(
+                "Vertical Tail", self.upload2, busy[1], filenames[1], "pending_x_offs_vert_tail",
+                "pending_z_offs_vert_tail", self.reset_key2,
+                root_state="pending_vt_root_chord", span_state="pending_vt_span", tip_state="pending_vt_tip_chord",
+                sweep_state="pending_vt_sweep"
+            ),
 
             layout.Box(style={"display": "flex", "alignItems": "center", "justifyContent": "space-between"})[
                 mui.Typography(variant="h6")["Horizontal Tail"],
                 mui.Checkbox(checked=self.pending_include_hor_tail, onChange=self.toggle_horizontal),
             ],
-            *(lifting_surface_section("Horizontal Tail", self.upload3, busy[2], filenames[2], "pending_x_offs_tail",
-                                      "pending_z_offs_tail", self.reset_key3,
-                                      include_title=False) if self.pending_include_hor_tail else []),
+            *(lifting_surface_section(
+                "Horizontal Tail", self.upload3, busy[2], filenames[2], "pending_x_offs_tail", "pending_z_offs_tail",
+                self.reset_key3,
+                root_state="pending_ht_root_chord", span_state="pending_ht_span", tip_state="pending_ht_tip_chord",
+                sweep_state="pending_ht_sweep",
+                include_title=False
+            ) if self.pending_include_hor_tail else []),
 
                 # --- FOOTER WITH BIG OPTIMIZE BUTTON ---
             mui.Divider(sx={"my": 3}),

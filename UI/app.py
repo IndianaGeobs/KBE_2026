@@ -102,19 +102,37 @@ class App(Component):
             }
 
             try:
+                # Original Offsets
                 new_x_offs_wings = float(panel.pending_x_offs_wings)
                 new_z_offs_wings = float(panel.pending_z_offs_wings)
                 new_x_offs_tail = float(panel.pending_x_offs_tail)
                 new_z_offs_tail = float(panel.pending_z_offs_tail)
                 new_x_offs_vert = float(panel.pending_x_offs_vert_tail)
                 new_z_offs_vert = float(panel.pending_z_offs_vert_tail)
+
+                # Fuselage
                 new_nose_length = float(panel.pending_nose_length)
                 new_body_length = float(panel.pending_main_body_length)
                 new_tail_length = float(panel.pending_tail_length)
                 new_radius = float(panel.pending_fuselage_radius)
+
+                # Wing
                 new_wing_dihedral = float(panel.pending_wing_dihedral)
                 new_wing_root_chord = float(panel.pending_wing_root_chord)
                 new_wing_sections = panel.pending_wing_sections
+
+                # --- NEW VERTICAL TAIL ---
+                new_vt_root = float(panel.pending_vt_root_chord)
+                new_vt_span = float(panel.pending_vt_span)
+                new_vt_tip = float(panel.pending_vt_tip_chord)
+                new_vt_sweep = float(panel.pending_vt_sweep)
+
+                # --- NEW HORIZONTAL TAIL ---
+                new_ht_root = float(panel.pending_ht_root_chord)
+                new_ht_span = float(panel.pending_ht_span)
+                new_ht_tip = float(panel.pending_ht_tip_chord)
+                new_ht_sweep = float(panel.pending_ht_sweep)
+
             except ValueError:
                 self._revert_to_last_committed(panel, old)
                 panel.error_wing = True
@@ -123,14 +141,6 @@ class App(Component):
 
             new_include_hor_tail = panel.pending_include_hor_tail
 
-            total_length = new_nose_length + new_body_length + new_tail_length
-
-            rx_w, rz_w = self._to_ratio(new_x_offs_wings, new_z_offs_wings, new_nose_length, new_body_length,
-                                        new_tail_length, new_radius)
-            rx_t, rz_t = self._to_ratio(new_x_offs_tail, new_z_offs_tail, new_nose_length, new_body_length,
-                                        new_tail_length, new_radius)
-            rx_v, rz_v = self._to_ratio(new_x_offs_vert, new_z_offs_vert, new_nose_length, new_body_length,
-                                        new_tail_length, new_radius)
 
             try:
                 from area_rule import AreaRule
@@ -146,6 +156,14 @@ class App(Component):
                     z_offs_tail=new_z_offs_tail,
                     x_offs_vert_tail=new_x_offs_vert,
                     z_offs_vert_tail=new_z_offs_vert,
+                    vt_root_chord_ratio=new_vt_root,
+                    vt_span_ratio=new_vt_span,
+                    vt_tip_chord_ratio=new_vt_tip,
+                    vt_sweep=new_vt_sweep,
+                    ht_root_chord_ratio=new_ht_root,
+                    ht_span_ratio=new_ht_span,
+                    ht_tip_chord_ratio=new_ht_tip,
+                    ht_sweep=new_ht_sweep,
                     show_constraints=AR.show_constraints,
                     nose_length=new_nose_length,
                     main_body_length=new_body_length,
@@ -179,8 +197,9 @@ class App(Component):
             self._apply_validated_changes(panel, old, new_x_offs_wings, new_z_offs_wings,
                                           new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
                                           new_include_hor_tail, new_tail_length, new_body_length, new_nose_length,
-                                          new_radius,
-                                          new_wing_dihedral, new_wing_root_chord, new_wing_sections)
+                                          new_radius, new_wing_dihedral, new_wing_root_chord, new_wing_sections,
+                                          new_vt_root, new_vt_span, new_vt_tip, new_vt_sweep,new_ht_root,
+                                          new_ht_span, new_ht_tip, new_ht_sweep)
         finally:
             self.applying = False
 
@@ -336,11 +355,15 @@ class App(Component):
 
         self.dialog_open_wing_out_fus = True
 
-    def _apply_validated_changes(self, panel, old, new_x_offs_wings, new_z_offs_wings,
-                                 new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
+    def _apply_validated_changes(self, panel, old,
+                                 new_x_offs_wings, new_z_offs_wings,
+                                 new_x_offs_tail, new_z_offs_tail,
+                                 new_x_offs_vert, new_z_offs_vert,
                                  new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius,
-                                 new_wing_dihedral, new_wing_root_chord,
-                                 new_wing_sections):
+                                 new_wing_dihedral, new_wing_root_chord, new_wing_sections,
+                                 # --- ACCEPT THE NEW VARIABLES HERE ---
+                                 new_vt_root, new_vt_span, new_vt_tip, new_vt_sweep,
+                                 new_ht_root, new_ht_span, new_ht_tip, new_ht_sweep):
 
         AR.wing_file = panel.pending_wing_file or old["wing_file"]
         AR.vert_tail_file = panel.pending_vert_tail_file or old["vert_tail_file"]
@@ -358,6 +381,16 @@ class App(Component):
         AR.wing_dihedral = new_wing_dihedral
         AR.wing_root_chord_ratio = new_wing_root_chord
         AR.wing_sections_ratios = new_wing_sections
+
+        AR.vt_root_chord_ratio = new_vt_root
+        AR.vt_span_ratio = new_vt_span
+        AR.vt_tip_chord_ratio = new_vt_tip
+        AR.vt_sweep = new_vt_sweep
+
+        AR.ht_root_chord_ratio = new_ht_root
+        AR.ht_span_ratio = new_ht_span
+        AR.ht_tip_chord_ratio = new_ht_tip
+        AR.ht_sweep = new_ht_sweep
 
         AR.user_constraints = panel.pending_user_constraints
         self.last_user_constraints = AR.user_constraints

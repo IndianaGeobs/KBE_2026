@@ -10,8 +10,8 @@ FILES_DIR = os.path.join(parent_dir, "Files")
 # Use the exact same DEF variables as Aircraft
 DEF_FUS = os.path.join(FILES_DIR, "fuselage.json")  # Corrected to JSON
 DEF_WING = os.path.join(FILES_DIR, "trial_airfoil_dense.txt")
-DEF_VT = os.path.join(FILES_DIR, "vert_tail_default.txt")
-DEF_HT = os.path.join(FILES_DIR, "hor_tail_default.txt")
+DEF_VT = os.path.join(FILES_DIR, "vert_tail_dense.txt")
+DEF_HT = os.path.join(FILES_DIR, "hor_tail_dense.txt")
 
 
 class AreaRule(Base):
@@ -25,15 +25,25 @@ class AreaRule(Base):
 
     x_offs_wings = Input(0.35)
     z_offs_wings = Input(0.0)
-    x_offs_tail = Input(0.75)
-    z_offs_tail = Input(0.0)
-    x_offs_vert_tail = Input(0.75)
+    x_offs_tail = Input(0.8)
+    z_offs_tail = Input(0.2)
+    x_offs_vert_tail = Input(0.8)
     z_offs_vert_tail = Input(0.0)
     show_constraints = Input(False)
 
     wing_dihedral = Input(5.0)
     wing_root_chord_ratio = Input(0.2)
     wing_sections_ratios = Input([{"span": 0.40, "tip_chord": 0.05, "sweep": 25.0}])
+
+    vt_root_chord_ratio = Input(0.08)
+    vt_span_ratio = Input(0.11)
+    vt_tip_chord_ratio = Input(0.03)
+    vt_sweep = Input(43.0)
+
+    ht_root_chord_ratio = Input(0.08)
+    ht_span_ratio = Input(0.11)
+    ht_tip_chord_ratio = Input(0.03)
+    ht_sweep = Input(43.0)
 
     nose_length = Input(12.6)
     main_body_length = Input(31.5)
@@ -57,15 +67,19 @@ class AreaRule(Base):
             z_offs_tail=self.z_offs_tail * self.fuselage_radius,
             x_offs_vert_tail=self.x_offs_vert_tail * total,
             z_offs_vert_tail=self.z_offs_vert_tail * self.fuselage_radius,
+            wing_dihedral=self.wing_dihedral,
+            wing_root_chord=self.actual_wing_root_chord,
+            wing_sections=self.actual_wing_sections,
+            vt_root_chord=self.actual_vt_root_chord,
+            vt_sections=self.actual_vt_sections,
+            ht_root_chord=self.actual_ht_root_chord,
+            ht_sections=self.actual_ht_sections,
             show_constraints=self.show_constraints,
             nose_length=self.nose_length,
             main_body_length=self.main_body_length,
             tail_length=self.tail_length,
             fuselage_radius=self.fuselage_radius,
-            user_constraints = self.user_constraints,
-            wing_dihedral=self.wing_dihedral,
-            wing_root_chord=self.actual_wing_root_chord,
-            wing_sections=self.actual_wing_sections
+            user_constraints=self.user_constraints
         )
 
     @Attribute
@@ -90,6 +104,26 @@ class AreaRule(Base):
                 "sweep": sec["sweep"]  # Angles don't scale
             })
         return sections_in_meters
+
+    @Attribute
+    def actual_vt_root_chord(self):
+        return self.vt_root_chord_ratio * self.total_fuselage_length
+
+    @Attribute
+    def actual_vt_sections(self):
+        return [{"span": self.vt_span_ratio * self.total_fuselage_length,
+                 "tip_chord": self.vt_tip_chord_ratio * self.total_fuselage_length,
+                 "sweep": self.vt_sweep}]
+
+    @Attribute
+    def actual_ht_root_chord(self):
+        return self.ht_root_chord_ratio * self.total_fuselage_length
+
+    @Attribute
+    def actual_ht_sections(self):
+        return [{"span": self.ht_span_ratio * self.total_fuselage_length,
+                 "tip_chord": self.ht_tip_chord_ratio * self.total_fuselage_length,
+                 "sweep": self.ht_sweep}]
 
 
 # Global instance shared across the web app components

@@ -48,6 +48,11 @@ class GeometryManager(GeomBase):
     wing_root_chord = Input()
     wing_sections = Input()
 
+    vt_root_chord = Input()
+    vt_sections = Input()
+    ht_root_chord = Input()
+    ht_sections = Input()
+
     @Attribute
     def raw_fuselage_tuple(self):
         """One central place to load the data for all sections."""
@@ -155,11 +160,14 @@ class GeometryManager(GeomBase):
 
     @Part
     def vert_tail(self):
-        return LiftingSurface(
+        return ParametricWing(
             wing_file=self.vert_tail_file,
-            x_offset=self.x_offs_vert_tail,
-            z_offset=self.z_offs_vert_tail,
+            abs_x=self.x_offs_vert_tail,
+            abs_z=self.z_offs_vert_tail,
             is_vertical=True,
+            dihedral=0.0,
+            root_chord=self.vt_root_chord,
+            sections=self.vt_sections
         )
 
     @Part
@@ -170,14 +178,17 @@ class GeometryManager(GeomBase):
             tool=self.fuselage_solid,
         )
 
-    @Part
+    @Part(parse=False)
     def h_tail_right(self):
-        return LiftingSurface(
+        return ParametricWing(
             wing_file=self.hor_tail_file,
-            x_offset=self.x_offs_tail,
-            z_offset=self.z_offs_tail,
+            abs_x=self.x_offs_tail,
+            abs_z=self.z_offs_tail,
             is_vertical=False,
-            hidden=not self.include_hor_tail,
+            dihedral=0.0,
+            root_chord=self.ht_root_chord,
+            sections=self.ht_sections,
+            hidden=not self.include_hor_tail
         )
 
     @Part

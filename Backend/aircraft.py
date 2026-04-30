@@ -53,6 +53,11 @@ class Aircraft(GeomBase):
     tail_length = Input(18.9)
     fuselage_radius = Input(2.829)
 
+    vt_root_chord = Input()
+    vt_sections = Input()
+    ht_root_chord = Input()
+    ht_sections = Input()
+
     user_constraints = Input([])
 
     @Part
@@ -78,7 +83,11 @@ class Aircraft(GeomBase):
             fuselage_radius=self.fuselage_radius,
             wing_dihedral=self.wing_dihedral,
             wing_root_chord=self.wing_root_chord,
-            wing_sections=self.wing_sections
+            wing_sections=self.wing_sections,
+            vt_root_chord=self.vt_root_chord,
+            vt_sections=self.vt_sections,
+            ht_root_chord=self.ht_root_chord,
+            ht_sections=self.ht_sections
         )
 
     @Part(parse=False)
