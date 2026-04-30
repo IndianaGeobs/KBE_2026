@@ -18,6 +18,9 @@ class App(Component):
     page = State(0)
     fig_images = State([])
 
+    # --- UI Visibility State ---
+    show_inputs = State(True)
+
     # Dialog states
     dialog_open_wing_out_fus = State(False)
     dialog_open_wing_hor_tail_inters = State(False)
@@ -51,6 +54,11 @@ class App(Component):
 
     inputs_panel = State(None)
 
+    # --- Toggle UI Panel ---
+    def toggle_inputs(self, *args):
+        self.show_inputs = not self.show_inputs
+        update()
+
     def on_file1_uploaded(self, path):
         self.inputs_panel.pending_wing_file = path
 
@@ -71,7 +79,6 @@ class App(Component):
 
     def _to_ratio(self, x_offs, z_offs, nose, body, tail, radius):
         return x_offs / (nose + body + tail), z_offs / radius
-
 
     def apply_changes(self, *args):
         self.applying = True
@@ -143,7 +150,7 @@ class App(Component):
                     nose_length=new_nose_length,
                     main_body_length=new_body_length,
                     tail_length=new_tail_length,
-                    fuselage_radius = new_radius,
+                    fuselage_radius=new_radius,
                     user_constraints=panel.pending_user_constraints,
                     wing_dihedral=new_wing_dihedral,
                     wing_root_chord=new_wing_root_chord,
@@ -159,7 +166,7 @@ class App(Component):
 
                 validation_errors = self._check_geometry_intersections(temp_AR, panel, old)
                 if validation_errors:
-                    #return
+                    # return
                     pass
 
             except Exception as e:
@@ -171,7 +178,8 @@ class App(Component):
 
             self._apply_validated_changes(panel, old, new_x_offs_wings, new_z_offs_wings,
                                           new_x_offs_tail, new_z_offs_tail, new_x_offs_vert, new_z_offs_vert,
-                                          new_include_hor_tail, new_tail_length, new_body_length, new_nose_length, new_radius,
+                                          new_include_hor_tail, new_tail_length, new_body_length, new_nose_length,
+                                          new_radius,
                                           new_wing_dihedral, new_wing_root_chord, new_wing_sections)
         finally:
             self.applying = False
@@ -347,11 +355,9 @@ class App(Component):
         AR.x_offs_vert_tail = new_x_offs_vert
         AR.z_offs_vert_tail = new_z_offs_vert
 
-
         AR.wing_dihedral = new_wing_dihedral
         AR.wing_root_chord = new_wing_root_chord
         AR.wing_sections = new_wing_sections
-
 
         AR.user_constraints = panel.pending_user_constraints
         self.last_user_constraints = AR.user_constraints
@@ -363,11 +369,9 @@ class App(Component):
         self.last_x_offs_vert_tail = new_x_offs_vert
         self.last_z_offs_vert_tail = new_z_offs_vert
 
-
         self.last_wing_dihedral = new_wing_dihedral
         self.last_wing_root_chord = new_wing_root_chord
         self.last_wing_sections = new_wing_sections
-
 
         AR.nose_length = new_nose_length
         AR.main_body_length = new_body_length
@@ -522,202 +526,233 @@ class App(Component):
             on_upload2=self.on_file2_uploaded,
             on_upload3=self.on_file3_uploaded,
             on_upload4=self.on_file4_uploaded,
+            # --- PASSING THE BUTTON PROPS ---
+            on_close=self.toggle_inputs,
+            on_apply=self.apply_changes,
+            is_applying=self.applying,
+            on_optimize=self.run_calculation,
+            is_busy=self.busy
+            # --------------------------------
         )
         self.inputs_panel = inputs
+
+        # --- EXTRACTED DIALOGS ---
+        dialogs = [
+            mui.Dialog(open=self.dialog_open_wing_out_fus, onClose=self.handle_close_wing_out_fus)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the wings surfaces\' roots is outside of the fuselage'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_wing_out_fus, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_ht_out_fus, onClose=self.handle_close_ht_out_fus)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the horizontal tail\'s root is outside of the fuselage'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_ht_out_fus, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_vt_out_fus, onClose=self.handle_close_vt_out_fus)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the vertical tail\'s root is outside of the fuselage'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_vt_out_fus, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_wing_hor_tail_inters, onClose=self.handle_close_lift_surf_inters)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Two lifting surfaces are intersecting'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_lift_surf_inters, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_wing_tip, onClose=self.handle_close_wing_tip)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the wing is not within the fuselage range'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_wing_tip, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_ht_tip, onClose=self.handle_close_ht_tip)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the horizontal tail is not within the fuselage range'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_ht_tip, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_vt_tip, onClose=self.handle_close_vt_tip)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the vertical tail is not within the fuselage range'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_vt_tip, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_wing_vert_tail_inters, onClose=self.handle_close_wing_vt_inters)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the wings and the vertical tail are intersecting'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_wing_vt_inters, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_hor_tail_vert_tail_inters, onClose=self.handle_close_ht_vt_intersection)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Configuration Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Part of the horizontal tail and the vertical tail are intersecting'],
+                    mui.DialogContentText['Fix the geometry to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_ht_vt_intersection, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_fuselage_reading_error, onClose=self.handle_close_fuselage_reading_error)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'warning.main', 'pt': 0, 'pb': 1})['Reading Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Error reading the fuselage file'],
+                    mui.DialogContentText['Fix the fuselage file to run the optimization']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_fuselage_reading_error, color='warning')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_lifting_surface_reading_error,
+                       onClose=self.handle_close_lifting_surface_reading_error)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'warning.main', 'pt': 0, 'pb': 1})['Reading Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['Error reading one of the lifting surfaces files'],
+                    mui.DialogContentText['Fix the lifting surface file to run the optimization']
+                ],
+                mui.DialogActions[
+                    mui.Button(onClick=self.handle_close_lifting_surface_reading_error, color='warning')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_wing_new_fus_error, onClose=self.handle_close_wing_new_fus_error)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Post-Optimization Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['After optimization, the wing root is not properly contained within the new fuselage'],
+                    mui.DialogContentText['The optimization resulted in a fuselage that doesn\'t fully enclose the wing root. Consider adjusting wing position or constraints.']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_wing_new_fus_error, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_ht_new_fus_error, onClose=self.handle_close_ht_new_fus_error)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Post-Optimization Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['After optimization, the horizontal tail root is not properly contained within the new fuselage'],
+                    mui.DialogContentText['The optimization resulted in a fuselage that doesn\'t fully enclose the horizontal tail root. Consider adjusting tail position or constraints.']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_ht_new_fus_error, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.dialog_open_vt_new_fus_error, onClose=self.handle_close_vt_new_fus_error)[
+                mui.Box(sx={'textAlign': 'center', 'pt': 2})[
+                    mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
+                    mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})['Post-Optimization Error']
+                ],
+                mui.DialogContent(sx={'textAlign': 'center'})[
+                    mui.DialogContentText['After optimization, the vertical tail root is not properly contained within the new fuselage'],
+                    mui.DialogContentText['The optimization resulted in a fuselage that doesn\'t fully enclose the vertical tail root. Consider adjusting tail position or constraints.']
+                ],
+                mui.DialogActions[mui.Button(onClick=self.handle_close_vt_new_fus_error, color='error')['Ok']]
+            ],
+            mui.Dialog(open=self.busy)[
+                layout.Box(orientation="vertical", v_align="center", h_align="center", sx={"p": 4})[
+                    mui.CircularProgress(),
+                    mui.Typography(variant="h6", sx={"mt": 2})["Running optimization"],
+                ]
+            ],
+        ]
 
         # Page 0
         if self.page == 0:
             return layout.Split(
                 orientation="vertical", height="100%", weights=[0, 1],
             )[
-                AppBar(title="Area Rule Fuselage Optimizer"),
-                layout.Split(
-                    height="100%", weights=[0, 0, 0, 1],
-                )[
-                    inputs,
-                    mui.Divider(orientation="vertical"),
-                    layout.Box(
-                        orientation="vertical", style={"padding": "1em", "gap": "1em"},
-                    )[
-                        mui.Button(
-                            variant="contained", onClick=self.apply_changes, disabled=self.applying
-                        )[
-                            layout.Box(orientation="horizontal", gap="0.5em", h_align="center")[
-                                mui.CircularProgress(size=20, sx={"color": "white"}) if self.applying else None,
-                                "Apply Changes & Render"
-                            ]
+                mui.AppBar(position="static")[
+                    mui.Toolbar()[
+                        mui.Typography(variant="h6", sx={"flexGrow": 1})[
+                            "Area Rule Fuselage Optimizer"
                         ],
-
-                            # [All your dialog boxes remain intact here, abridged to save reading space but you keep them exactly the same]
-                        mui.Dialog(open=self.dialog_open_wing_out_fus, onClose=self.handle_close_wing_out_fus)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the wings surfaces\' roots is outside of the fuselage'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_wing_out_fus, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_ht_out_fus, onClose=self.handle_close_ht_out_fus)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the horizontal tail\'s root is outside of the fuselage'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_ht_out_fus, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_vt_out_fus, onClose=self.handle_close_vt_out_fus)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the vertical tail\'s root is outside of the fuselage'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_vt_out_fus, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_wing_hor_tail_inters,
-                                   onClose=self.handle_close_lift_surf_inters)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Two lifting surfaces are intersecting'], mui.DialogContentText[
-                                    'Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_lift_surf_inters, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_wing_tip, onClose=self.handle_close_wing_tip)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the wing is not within the fuselage range'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_wing_tip, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_ht_tip, onClose=self.handle_close_ht_tip)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the horizontal tail is not within the fuselage range'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_ht_tip, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_vt_tip, onClose=self.handle_close_vt_tip)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the vertical tail is not within the fuselage range'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_vt_tip, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_wing_vert_tail_inters,
-                                   onClose=self.handle_close_wing_vt_inters)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Part of the wings and the vertical tail are intersecting'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_wing_vt_inters, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_hor_tail_vert_tail_inters,
-                                   onClose=self.handle_close_ht_vt_intersection)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Configuration Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText[
-                                    'Part of the horizontal tail and the vertical tail are intersecting'],
-                                mui.DialogContentText['Fix the geometry to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_ht_vt_intersection, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_fuselage_reading_error,
-                                   onClose=self.handle_close_fuselage_reading_error)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'warning.main', 'pt': 0, 'pb': 1})[
-                                    'Reading Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Error reading the fuselage file'], mui.DialogContentText[
-                                    'Fix the fuselage file to run the optimization']], mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_fuselage_reading_error, color='warning')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_lifting_surface_reading_error,
-                                   onClose=self.handle_close_lifting_surface_reading_error)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'warning.main', 'mb': 1})['⚠️'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'warning.main', 'pt': 0, 'pb': 1})[
-                                    'Reading Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText['Error reading one of the lifting surfaces files'],
-                                mui.DialogContentText['Fix the lifting surface file to run the optimization']],
-                            mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_lifting_surface_reading_error, color='warning')[
-                                    'Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_wing_new_fus_error,
-                                   onClose=self.handle_close_wing_new_fus_error)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Post-Optimization Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText[
-                                    'After optimization, the wing root is not properly contained within the new fuselage'],
-                                mui.DialogContentText[
-                                    'The optimization resulted in a fuselage that doesn\'t fully enclose the wing root. Consider adjusting wing position or constraints.']],
-                            mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_wing_new_fus_error, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_ht_new_fus_error, onClose=self.handle_close_ht_new_fus_error)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Post-Optimization Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText[
-                                    'After optimization, the horizontal tail root is not properly contained within the new fuselage'],
-                                mui.DialogContentText[
-                                    'The optimization resulted in a fuselage that doesn\'t fully enclose the horizontal tail root. Consider adjusting tail position or constraints.']],
-                            mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_ht_new_fus_error, color='error')['Ok']]
-                        ],
-                        mui.Dialog(open=self.dialog_open_vt_new_fus_error, onClose=self.handle_close_vt_new_fus_error)[
-                            mui.Box(sx={'textAlign': 'center', 'pt': 2})[
-                                mui.Typography(variant='h4', sx={'color': 'error.main', 'mb': 1})['🔴'],
-                                mui.DialogTitle(sx={'textAlign': 'center', 'color': 'error.main', 'pt': 0, 'pb': 1})[
-                                    'Post-Optimization Error']], mui.DialogContent(sx={'textAlign': 'center'})[
-                                mui.DialogContentText[
-                                    'After optimization, the vertical tail root is not properly contained within the new fuselage'],
-                                mui.DialogContentText[
-                                    'The optimization resulted in a fuselage that doesn\'t fully enclose the vertical tail root. Consider adjusting tail position or constraints.']],
-                            mui.DialogActions[
-                                mui.Button(onClick=self.handle_close_vt_new_fus_error, color='error')['Ok']]
-                        ],
-
-                        mui.Button(variant="contained", onClick=self.run_calculation)["Optimize Geometry"],
-                        #mui.Button(variant="outlined", onClick=self.toggle_constraints, color="error")[
-                        #    "Hide Constraints" if AR.show_constraints else "Show Constraints"
-                        #],
-                        mui.Dialog(open=self.busy)[
-                            layout.Box(orientation="vertical", v_align="center", h_align="center")[
-                                mui.CircularProgress, mui.Typography(variant="h4")["Running optimization"],
-                            ]
-                        ],
-                    ],
-                    viewer.Viewer(
-                        objects=[
-                            AR.aircraft.wings_less_fuselage,
-                            AR.aircraft.fuselage,
-                            AR.aircraft.vert_tail_less_fuselage,
-                            AR.aircraft.hor_tail_less_fuselage,
-                            AR.aircraft.constraint_visualizers
+                        mui.IconButton(onClick=self.toggle_inputs, sx={"color": "white"})[
+                            mui.Icon["menu_open" if self.show_inputs else "menu"]
                         ]
-                    ),
+                    ]
+                ],
+                layout.Box(style={"position": "relative", "height": "100%"})[
+                    # --- Floating Edit Button ---
+                    (None if self.show_inputs else mui.Fab(
+                        color="primary", onClick=self.toggle_inputs,
+                        sx={"position": "absolute", "bottom": 24, "left": 24, "zIndex": 1000}
+                    )[mui.Icon["edit"]]),
+
+                    layout.Split(
+                        height="100%",
+                        # --- CLEANED UP COLUMNS: ONLY 3 EXIST NOW ---
+                        weights=[0.5, 0, 1] if self.show_inputs else [0, 0, 1]
+                    )[
+                        # 1. Inputs Panel
+                        (inputs if self.show_inputs else mui.Box(sx={"display": "none"})),
+
+                        # 2. Divider
+                        (mui.Divider(orientation="vertical") if self.show_inputs else mui.Box(sx={"display": "none"})),
+
+                        # 3. 3D Viewer
+                        viewer.Viewer(
+                            objects=[
+                                AR.aircraft.wings_less_fuselage,
+                                AR.aircraft.fuselage,
+                                AR.aircraft.vert_tail_less_fuselage,
+                                AR.aircraft.hor_tail_less_fuselage,
+                                AR.aircraft.constraint_visualizers
+                            ]
+                        ),
+                    ],
+                    *dialogs
                 ],
             ]
 
         # Page 1
         elif self.page == 1:
+            # [Keep Page 1 exactly as it was]
             csv_lines = [
                 "Metric,Value",
                 f"Total initial roughness,{AR.aircraft.optimization.rough_X0:.3e}",
@@ -736,7 +771,16 @@ class App(Component):
             return layout.Split(
                 orientation="vertical", height="100%", weights=[0, 1],
             )[
-                AppBar(title="Area Rule Fuselage Optimizer"),
+                mui.AppBar(position="static")[
+                    mui.Toolbar()[
+                        mui.Typography(variant="h6", sx={"flexGrow": 1})[
+                            "Area Rule Fuselage Optimizer"
+                        ],
+                        mui.IconButton(onClick=self.toggle_inputs, sx={"color": "white"})[
+                            mui.Icon["menu_open" if self.show_inputs else "menu"]
+                        ]
+                    ]
+                ],
                 layout.Split(
                     orientation="vertical", height="100%", weights=[1, 0],
                 )[
@@ -752,59 +796,41 @@ class App(Component):
                                 mui.Table(size="medium")[
                                     mui.TableBody[
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Total initial roughness:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.rough_X0:.3e}"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Total initial roughness:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.rough_X0:.3e}"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Total optimized roughness:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.rough_opt:.3e}"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Total optimized roughness:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.rough_opt:.3e}"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Roughness change:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.rough_reduction:.4f} %"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Roughness change:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.rough_reduction:.4f} %"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage initial volume:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.Vf_0:.3e} m³"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage initial volume:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.Vf_0:.3e} m³"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage optimized volume:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.Vf_opt:.3e} m³"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage optimized volume:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.Vf_opt:.3e} m³"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage volume change:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.volume_change:.4f} %"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage volume change:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.volume_change:.4f} %"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage initial external area:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.A_ext_0:.3e} m²"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage initial external area:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.A_ext_0:.3e} m²"],
                                         ],
                                         mui.TableRow(sx={"height": "50px", "borderBottom": "1px solid #666"})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage final external area:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.A_ext_opt:.3e} m²"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage final external area:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.A_ext_opt:.3e} m²"],
                                         ],
                                         mui.TableRow(
                                             sx={"height": "50px", "&:last-child td, &:last-child th": {"border": 0}})[
-                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})[
-                                                "Fuselage external area change:"],
-                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[
-                                                f"{AR.aircraft.optimization.ext_area_change:.4f} %"],
+                                            mui.TableCell(component="th", scope="row", sx={"fontWeight": "500"})["Fuselage external area change:"],
+                                            mui.TableCell(align="right", sx={"fontWeight": "500"})[f"{AR.aircraft.optimization.ext_area_change:.4f} %"],
                                         ],
                                     ]
                                 ]
@@ -819,12 +845,8 @@ class App(Component):
                         layout.Split(
                             orientation="vertical", height="100%", weights=[0, 1],
                         )[
-                            layout.Box(h_align="center", orientation="vertical",
-                                       style={"padding": "0em", "height": "auto"})[
-                                mui.Typography(variant="subtitle1",
-                                               style={"marginBottom": "0.5em", "marginTop": "0.5em"})[
-                                    "Click on any graph to download it"
-                                ]
+                            layout.Box(h_align="center", orientation="vertical", style={"padding": "0em", "height": "auto"})[
+                                mui.Typography(variant="subtitle1", style={"marginBottom": "0.5em", "marginTop": "0.5em"})["Click on any graph to download it"]
                             ],
                             layout.Box(
                                 style={
@@ -833,20 +855,15 @@ class App(Component):
                                 }
                             )[
                                 *[
-                                    html.a(href=img["src"], download=img["filename"],
-                                           style={"display": "block", "height": "100%", "width": "100%"})[
-                                        html.img(src=img["src"],
-                                                 style={"width": "100%", "height": "100%", "objectFit": "contain"})
+                                    html.a(href=img["src"], download=img["filename"], style={"display": "block", "height": "100%", "width": "100%"})[
+                                        html.img(src=img["src"], style={"width": "100%", "height": "100%", "objectFit": "contain"})
                                     ]
                                     for img in self.fig_images[:2]
                                 ],
                                 *(
                                     [
-                                        html.a(href=self.fig_images[2]["src"], download=self.fig_images[2]["filename"],
-                                               style={"display": "block", "height": "100%", "width": "100%",
-                                                      "gridColumn": "1 / -1"})[
-                                            html.img(src=self.fig_images[2]["src"],
-                                                     style={"width": "100%", "height": "100%", "objectFit": "contain"})
+                                        html.a(href=self.fig_images[2]["src"], download=self.fig_images[2]["filename"], style={"display": "block", "height": "100%", "width": "100%", "gridColumn": "1 / -1"})[
+                                            html.img(src=self.fig_images[2]["src"], style={"width": "100%", "height": "100%", "objectFit": "contain"})
                                         ]
                                     ]
                                     if len(self.fig_images) > 2 else []
@@ -854,11 +871,9 @@ class App(Component):
                             ],
                         ],
                     ],
-                    layout.Box(orientation="horizontal",
-                               style={"padding": "0.5em", "justifyContent": "center", "gap": "1em"})[
+                    layout.Box(orientation="horizontal", style={"padding": "0.5em", "justifyContent": "center", "gap": "1em"})[
                         mui.Button(variant="outlined", onClick=lambda _: setattr(self, "page", 0))["Back"],
-                        mui.Button(variant="contained" if self.page == 1 else "outlined",
-                                   onClick=self.switch_to_graphs)["Results"],
+                        mui.Button(variant="contained" if self.page == 1 else "outlined", onClick=self.switch_to_graphs)["Results"],
                         mui.Button(variant="outlined", onClick=self.switch_to_view3d)["3D View"],
                     ],
                 ],
@@ -869,7 +884,16 @@ class App(Component):
             return layout.Box(
                 orientation="vertical", style={"height": "100%"},
             )[
-                AppBar(title="Area Rule Fuselage Optimizer"),
+                mui.AppBar(position="static")[
+                    mui.Toolbar()[
+                        mui.Typography(variant="h6", sx={"flexGrow": 1})[
+                            "Area Rule Fuselage Optimizer"
+                        ],
+                        mui.IconButton(onClick=self.toggle_inputs, sx={"color": "white"})[
+                            mui.Icon["menu_open" if self.show_inputs else "menu"]
+                        ]
+                    ]
+                ],
                 layout.Box(
                     orientation="horizontal", h_align="center", style={"padding": "0.5em 0.5em", "gap": "2em"},
                 )[
@@ -892,8 +916,7 @@ class App(Component):
                         AR.aircraft.constraint_visualizers
                     ]
                 ),
-                layout.Box(orientation="horizontal",
-                           style={"padding": "0.5em", "justifyContent": "center", "gap": "1em"})[
+                layout.Box(orientation="horizontal", style={"padding": "0.5em", "justifyContent": "center", "gap": "1em"})[
                     mui.Button(variant="outlined", onClick=lambda _: setattr(self, "page", 0))["Back"],
                     mui.Button(variant="outlined", onClick=self.switch_to_graphs)["Results"],
                     mui.Button(variant="contained" if self.page == 2 else "outlined", onClick=self.switch_to_view3d)[

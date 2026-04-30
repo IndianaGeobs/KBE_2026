@@ -41,23 +41,32 @@ class ParametricWing(GeomBase):
                             points.append(Point(x, 0.0, z))
                         except ValueError:
                             pass
+
+            # --- CRITICAL CAD FIX: THE TRAILING EDGE SEAL ---
+            # Airfoil files almost always have an open trailing edge.
+            # We MUST force the last coordinate to equal the first coordinate.
+            # This creates a perfect sharp edge, destroying the "micro-face"
+            if len(points) > 2:
+                distance = points[0].distance(points[-1])
+                # If there is any gap at all, stitch the end to the beginning
+                if distance > 1e-7:
+                    points.append(points[0])
+
         except FileNotFoundError:
-            points = [Point(0, 0, 0), Point(1, 0, 0)]
+            # Fallback diamond shape (closed loop)
+            points = [Point(0, 0, 0), Point(0.5, 0, 0.1), Point(1, 0, 0), Point(0, 0, 0)]
+
         return points
 
     @Part(parse=False)
     def airfoil_curves(self):
         rib_curves = []
         current_x = self.abs_x
-        current_y = -0.001
+        current_y = -0.05
         current_z = self.abs_z
 
         # Gets the Root Chord, then grabs the Tip Chord for every section added
         chords = [self.root_chord] + [sec["tip_chord"] for sec in self.sections]
-
-        # --- ADD THIS DEBUG LINE ---
-        print(f"\n✈️ BUILDING WING: Lofting {len(chords)} ribs with Chords (meters): {chords}")
-        # ---------------------------
 
         for i, chord in enumerate(chords):
             scaled_points = []

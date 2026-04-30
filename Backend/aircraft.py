@@ -9,7 +9,7 @@ FILES_DIR = os.path.join(parent_dir, "Files")
 
 # 2. DEFINE THE CORRECT FILENAMES
 DEF_FUS = os.path.join(FILES_DIR, "fuselage.json") # Note: .json
-DEF_WING = os.path.join(FILES_DIR, "trial_airfoil.txt")
+DEF_WING = os.path.join(FILES_DIR, "trial_airfoil_dense.txt")
 DEF_VT = os.path.join(FILES_DIR, "vert_tail_default.txt")
 DEF_HT = os.path.join(FILES_DIR, "hor_tail_default.txt")
 

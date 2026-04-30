@@ -123,10 +123,9 @@ class GeometryManager(GeomBase):
 
     @Part
     def wings_pair(self):
-        """Fuses left and right into ONE single solid. Much more robust for cutting!"""
-        return Fused(
-            shape_in=self.right_wing.solid,
-            tool=self.left_wing,
+        """Group wings as a Compound instead of Fused to bypass centerline CAD topology crashes."""
+        return Compound(
+            built_from=[self.right_wing.solid, self.left_wing],
             color="yellow",
             transparency=0.2
         )
@@ -149,10 +148,9 @@ class GeometryManager(GeomBase):
 
     @Part(parse=False)
     def wings_less_fuselage(self):
-        """Now we subtract from one solid instead of a compound/folder."""
-        return Subtracted(
-            shape_in=self.wings_pair,
-            tool=self.fuselage_solid,
+        """Group them back together AFTER the independent cuts."""
+        return Compound(
+            built_from=[self.right_wing_less_fuselage, self.left_wing_less_fuselage]
         )
 
     @Part
