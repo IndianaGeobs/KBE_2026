@@ -1,3 +1,8 @@
+
+# ------------------- OUTDATED BY PARAMETRIC_WING -------------------- #
+
+
+
 import os
 import sys
 

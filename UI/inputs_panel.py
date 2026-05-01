@@ -2,8 +2,8 @@ import os
 from parapy.webgui import layout, html, mui
 from parapy.webgui.core import Component, NodeType, FileUpload, Prop, State, update
 
-from area_rule import AR
-
+from area_rule import AR, PREVIEW_AR
+#from Backend.ghost_geometry import GHOST
 
 class InputsPanel(Component):
     """InputsPanel: holds pending files and pending numeric strings"""
@@ -26,6 +26,7 @@ class InputsPanel(Component):
     upload3 = FileUpload("Horizontal Tail")
     upload4 = FileUpload("Fuselage")
 
+    # --- PULL INITIAL STATE FROM AR ---
     pending_wing_file = State(AR.wing_file)
     pending_vert_tail_file = State(AR.vert_tail_file)
     pending_hor_tail_file = State(AR.hor_tail_file)
@@ -37,35 +38,116 @@ class InputsPanel(Component):
     pending_z_offs_tail = State(str(AR.z_offs_tail))
     pending_x_offs_vert_tail = State(str(AR.x_offs_vert_tail))
     pending_z_offs_vert_tail = State(str(AR.z_offs_vert_tail))
-    pending_vt_root_chord = State(0.06)
-    pending_vt_span = State(0.08)
-    pending_vt_tip_chord = State(0.03)
-    pending_vt_sweep = State(35.0)
-    pending_ht_root_chord = State(0.05)
-    pending_ht_span = State(0.06)
-    pending_ht_tip_chord = State(0.02)
-    pending_ht_sweep = State(30.0)
 
-    pending_wing_dihedral = State("5.0")
-    pending_wing_root_chord = State("0.2")
-    pending_wing_sections = State([
-        {"span": 0.40, "root_chord": 0.2, "tip_chord": 0.05, "sweep": 40.0}
-    ])
+    pending_vt_root_chord = State(AR.vt_root_chord_ratio)
+    pending_vt_span = State(AR.vt_span_ratio)
+    pending_vt_tip_chord = State(AR.vt_tip_chord_ratio)
+    pending_vt_sweep = State(AR.vt_sweep)
 
-    pending_nose_length = State("12.6")
-    pending_main_body_length = State("31.5")
-    pending_tail_length = State("18.9")
-    pending_fuselage_radius = State("2.829")
+    pending_ht_root_chord = State(AR.ht_root_chord_ratio)
+    pending_ht_span = State(AR.ht_span_ratio)
+    pending_ht_tip_chord = State(AR.ht_tip_chord_ratio)
+    pending_ht_sweep = State(AR.ht_sweep)
+
+    pending_wing_dihedral = State(str(AR.wing_dihedral))
+    pending_wing_root_chord = State(str(AR.wing_root_chord_ratio))
+    pending_wing_sections = State(AR.wing_sections_ratios)
+
+    pending_nose_length = State(str(AR.nose_length))
+    pending_main_body_length = State(str(AR.main_body_length))
+    pending_tail_length = State(str(AR.tail_length))
+    pending_fuselage_radius = State(str(AR.fuselage_radius))
 
     pending_include_hor_tail = State(AR.include_hor_tail)
+    pending_user_constraints = State(AR.user_constraints)
 
-    pending_user_constraints = State([])
-
-    # Reset keys to force file input re-render
     reset_key1 = State(0)
     reset_key2 = State(0)
     reset_key3 = State(0)
     reset_key4 = State(0)
+
+    def sync_ghost(self):
+        """Instantly updates the PREVIEW_AR hologram without running heavy CAD cuts."""
+        try:
+            PREVIEW_AR.nose_length = float(self.pending_nose_length)
+            PREVIEW_AR.main_body_length = float(self.pending_main_body_length)
+            PREVIEW_AR.tail_length = float(self.pending_tail_length)
+            PREVIEW_AR.fuselage_radius = float(self.pending_fuselage_radius)
+
+            PREVIEW_AR.x_offs_wings = float(self.pending_x_offs_wings)
+            PREVIEW_AR.z_offs_wings = float(self.pending_z_offs_wings)
+            PREVIEW_AR.x_offs_tail = float(self.pending_x_offs_tail)
+            PREVIEW_AR.z_offs_tail = float(self.pending_z_offs_tail)
+            PREVIEW_AR.x_offs_vert_tail = float(self.pending_x_offs_vert_tail)
+            PREVIEW_AR.z_offs_vert_tail = float(self.pending_z_offs_vert_tail)
+
+            PREVIEW_AR.wing_dihedral = float(self.pending_wing_dihedral)
+            PREVIEW_AR.wing_root_chord_ratio = float(self.pending_wing_root_chord)
+            PREVIEW_AR.wing_sections_ratios = self.pending_wing_sections
+
+            PREVIEW_AR.vt_root_chord_ratio = float(self.pending_vt_root_chord)
+            PREVIEW_AR.vt_span_ratio = float(self.pending_vt_span)
+            PREVIEW_AR.vt_tip_chord_ratio = float(self.pending_vt_tip_chord)
+            PREVIEW_AR.vt_sweep = float(self.pending_vt_sweep)
+
+            PREVIEW_AR.ht_root_chord_ratio = float(self.pending_ht_root_chord)
+            PREVIEW_AR.ht_span_ratio = float(self.pending_ht_span)
+            PREVIEW_AR.ht_tip_chord_ratio = float(self.pending_ht_tip_chord)
+            PREVIEW_AR.ht_sweep = float(self.pending_ht_sweep)
+
+            PREVIEW_AR.include_hor_tail = self.pending_include_hor_tail
+            PREVIEW_AR.user_constraints = self.pending_user_constraints
+
+            update()
+        except ValueError:
+            pass
+
+    def revert_changes(self, *args):
+        """Reverts all pending UI states to match the currently applied AR values."""
+        # Files
+        self.pending_wing_file = AR.wing_file
+        self.pending_vert_tail_file = AR.vert_tail_file
+        self.pending_hor_tail_file = AR.hor_tail_file
+        self.pending_fuselage_file = AR.fuselage_file
+
+        # Positions/Offsets
+        self.pending_x_offs_wings = str(AR.x_offs_wings)
+        self.pending_z_offs_wings = str(AR.z_offs_wings)
+        self.pending_x_offs_tail = str(AR.x_offs_tail)
+        self.pending_z_offs_tail = str(AR.z_offs_tail)
+        self.pending_x_offs_vert_tail = str(AR.x_offs_vert_tail)
+        self.pending_z_offs_vert_tail = str(AR.z_offs_vert_tail)
+
+        # Fuselage
+        self.pending_nose_length = str(AR.nose_length)
+        self.pending_main_body_length = str(AR.main_body_length)
+        self.pending_tail_length = str(AR.tail_length)
+        self.pending_fuselage_radius = str(AR.fuselage_radius)
+
+        # Lifting Surface Geometry
+        self.pending_wing_dihedral = str(AR.wing_dihedral)
+        self.pending_wing_root_chord = str(AR.wing_root_chord_ratio)
+        self.pending_wing_sections = AR.wing_sections_ratios
+
+        self.pending_vt_root_chord = AR.vt_root_chord_ratio
+        self.pending_vt_span = AR.vt_span_ratio
+        self.pending_vt_tip_chord = AR.vt_tip_chord_ratio
+        self.pending_vt_sweep = AR.vt_sweep
+
+        self.pending_ht_root_chord = AR.ht_root_chord_ratio
+        self.pending_ht_span = AR.ht_span_ratio
+        self.pending_ht_tip_chord = AR.ht_tip_chord_ratio
+        self.pending_ht_sweep = AR.ht_sweep
+
+        self.pending_include_hor_tail = AR.include_hor_tail
+        self.pending_user_constraints = AR.user_constraints
+
+        # Reset FileUpload widgets visually
+        self.request_upload_reset()
+
+        # Sync the ghost (which will now coincide with AR and vanish)
+        self.sync_ghost()
+        update()
 
     @upload1.on_complete
     def _on_wing(self, file):
@@ -99,12 +181,12 @@ class InputsPanel(Component):
         setattr(self, state_var, new_path)
         getattr(self, callback)(new_path)
 
-    # Constraints helper functions
     def add_constraint(self, *args):
         new_list = list(self.pending_user_constraints)
         new_list.append({"x_pct": 0.5, "r_pct": 0.5})
         self.pending_user_constraints = new_list
         AR.user_constraints = new_list
+        self.sync_ghost()
         update()
 
     def remove_constraint(self, idx):
@@ -112,6 +194,7 @@ class InputsPanel(Component):
         new_list.pop(idx)
         self.pending_user_constraints = new_list
         AR.user_constraints = new_list
+        self.sync_ghost()
         update()
 
     def update_constraint(self, idx, key, val):
@@ -120,16 +203,16 @@ class InputsPanel(Component):
         new_list[idx][key] = val
         self.pending_user_constraints = new_list
         AR.user_constraints = new_list
+        self.sync_ghost()
         update()
 
-    # Wings helper functions
     def add_wing_section(self, *args):
         sections = list(self.pending_wing_sections)
         if len(sections) < 3:
             last_tip = sections[-1]["tip_chord"]
-            # Adding section with small ratios instead of massive meters
             sections.append({"span": 0.06, "root_chord": last_tip, "tip_chord": 0.015, "sweep": 30.0})
             self.pending_wing_sections = sections
+            self.sync_ghost()
             update()
 
     def remove_wing_section(self, *args):
@@ -137,6 +220,7 @@ class InputsPanel(Component):
         if len(sections) > 1:
             sections.pop()
             self.pending_wing_sections = sections
+            self.sync_ghost()
             update()
 
     def update_wing_section(self, idx, key, val):
@@ -154,10 +238,13 @@ class InputsPanel(Component):
             self.pending_wing_root_chord = str(val)
 
         self.pending_wing_sections = sections
+        self.sync_ghost()
         update()
 
     def toggle_horizontal(self, event, checked: bool) -> None:
         self.pending_include_hor_tail = checked
+        self.sync_ghost()
+        update()
 
     def request_upload_reset(self):
         self.reset_key1 += 1
@@ -166,14 +253,6 @@ class InputsPanel(Component):
         self.reset_key4 += 1
 
     def render(self) -> NodeType:
-        try:
-            total_length = float(self.pending_nose_length) + float(self.pending_main_body_length) + float(
-                self.pending_tail_length)
-        except ValueError:
-            total_length = 63.0
-
-        max_chord_limit = round(0.60 * total_length, 2)
-
         def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key,
                                     root_state=None, span_state=None, tip_state=None, sweep_state=None,
                                     include_title=True):
@@ -196,17 +275,20 @@ class InputsPanel(Component):
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"{title} X-Position: {int(curr_x * 100)}% of length"],
                     mui.Slider(value=curr_x, min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, x_offset, str(val)))
+                               onChange=lambda ev, val, *_: (setattr(self, x_offset, str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, x_offset, str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical", sx={"mb": 2})[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"{title} Z-Position: {int(curr_z * 100)}% (relative to radius)"],
                     mui.Slider(value=curr_z, min=-1.2, max=1.2, step=0.01, valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, z_offset, str(val)))
+                               onChange=lambda ev, val, *_: (setattr(self, z_offset, str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, z_offset, str(val)), self.sync_ghost()))
                 ]
             ]
 
-            # --- NEW PARAMETRIC INJECTIONS ---
             if root_state:
                 c_root = float(getattr(self, root_state))
                 c_span = float(getattr(self, span_state))
@@ -217,21 +299,37 @@ class InputsPanel(Component):
                     layout.Box(style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px",
                                       "marginTop": "10px", "marginBottom": "10px"})[
                         mui.Typography(variant="subtitle2", sx={"mb": 1})[f"{title} Geometry"],
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Root Chord: {int(c_root * 100)}%"],
                         mui.Slider(value=c_root, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val: setattr(self, root_state, float(val))),
+                                   onChange=lambda ev, val, *_: (
+                                   setattr(self, root_state, float(val)), self.sync_ghost()),
+                                   onChangeCommitted=lambda ev, val, *_: (
+                                   setattr(self, root_state, float(val)), self.sync_ghost())),
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Span: {int(c_span * 100)}%"],
                         mui.Slider(value=c_span, min=0.01, max=0.4, step=0.01, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val: setattr(self, span_state, float(val))),
+                                   onChange=lambda ev, val, *_: (
+                                   setattr(self, span_state, float(val)), self.sync_ghost()),
+                                   onChangeCommitted=lambda ev, val, *_: (
+                                   setattr(self, span_state, float(val)), self.sync_ghost())),
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Tip Chord: {int(c_tip * 100)}%"],
                         mui.Slider(value=c_tip, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val: setattr(self, tip_state, float(val))),
+                                   onChange=lambda ev, val, *_: (
+                                   setattr(self, tip_state, float(val)), self.sync_ghost()),
+                                   onChangeCommitted=lambda ev, val, *_: (
+                                   setattr(self, tip_state, float(val)), self.sync_ghost())),
+
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[f"LE Sweep: {c_sweep}°"],
                         mui.Slider(value=c_sweep, min=-10.0, max=60.0, step=0.5, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val: setattr(self, sweep_state, float(val)))
+                                   onChange=lambda ev, val, *_: (
+                                   setattr(self, sweep_state, float(val)), self.sync_ghost()),
+                                   onChangeCommitted=lambda ev, val, *_: (
+                                   setattr(self, sweep_state, float(val)), self.sync_ghost()))
                     ]
                 )
 
@@ -248,11 +346,14 @@ class InputsPanel(Component):
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Constraint {i + 1} X-Position: {int(c['x_pct'] * 100)}%"],
                 mui.Slider(value=c['x_pct'], min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
-                           onChangeCommitted=lambda ev, val: self.update_constraint(i, 'x_pct', float(val))),
+                           onChange=lambda ev, val, *_: self.update_constraint(i, 'x_pct', float(val)),
+                           onChangeCommitted=lambda ev, val, *_: self.update_constraint(i, 'x_pct', float(val))),
+
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Constraint {i + 1} Min Radius: {int(c.get('r_pct', 0.5) * 100)}% of local fuselage"],
                 mui.Slider(value=c.get('r_pct', 0.5), min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
-                           onChangeCommitted=lambda ev, val: self.update_constraint(i, 'r_pct', float(val))),
+                           onChange=lambda ev, val, *_: self.update_constraint(i, 'r_pct', float(val)),
+                           onChangeCommitted=lambda ev, val, *_: self.update_constraint(i, 'r_pct', float(val))),
                 layout.Box(h_align="right")[
                     mui.Button(color="error", size="small", onClick=lambda ev: self.remove_constraint(i))["Remove"]]
             ]
@@ -278,18 +379,19 @@ class InputsPanel(Component):
 
         return layout.Box(orientation="vertical", gap="1em", style={"padding": "1em"})[
 
-            # --- HEADER WITH APPLY & CLOSE BUTTONS ---
             layout.Box(style={"display": "flex", "justifyContent": "space-between", "alignItems": "center",
                               "marginBottom": "-10px"})[
                 mui.Typography(variant="h5")["Parameters"],
 
-                    # Increased gap from 10px to 15px
-                layout.Box(style={"display": "flex", "gap": "15px", "alignItems": "center"})[
+                layout.Box(style={"display": "flex", "gap": "10px", "alignItems": "center"})[
                     mui.Button(
-                        variant="contained",
-                        size="small",
-                        onClick=self.on_apply,
-                        disabled=self.is_applying,
+                        variant="outlined", size="small", color="error", onClick=self.revert_changes,
+                        disabled=self.is_applying
+                    )[
+                        "Reset"
+                    ],
+                    mui.Button(
+                        variant="contained", size="small", onClick=self.on_apply, disabled=self.is_applying,
                         sx={"padding": "6px 20px"}
                     )[
                         layout.Box(orientation="horizontal", gap="0.5em", h_align="center")[
@@ -297,13 +399,10 @@ class InputsPanel(Component):
                             "Apply"
                         ]
                     ],
-                    mui.IconButton(onClick=lambda ev: self.on_close(), size="small")[
-                        mui.Icon["close"]
-                    ]
+                    mui.IconButton(onClick=lambda ev: self.on_close(), size="small")[mui.Icon["close"]]
                 ]
             ],
             mui.Divider(),
-                # ----------------------------------------
 
             mui.Typography(variant="h6")["Fuselage"],
             layout.Box(style={"display": "flex", "alignItems": "center"})[
@@ -324,28 +423,40 @@ class InputsPanel(Component):
                         f"Nose Length: {self.pending_nose_length} m"],
                     mui.Slider(value=float(self.pending_nose_length), min=5.0, max=25.0, step=0.1,
                                valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, "pending_nose_length", str(val)))
+                               onChange=lambda ev, val, *_: (
+                               setattr(self, "pending_nose_length", str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, "pending_nose_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"Main Body Length: {self.pending_main_body_length} m"],
                     mui.Slider(value=float(self.pending_main_body_length), min=10.0, max=60.0, step=0.5,
                                valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, "pending_main_body_length", str(val)))
+                               onChange=lambda ev, val, *_: (
+                               setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"Tail Length: {self.pending_tail_length} m"],
                     mui.Slider(value=float(self.pending_tail_length), min=5.0, max=30.0, step=0.1,
                                valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, "pending_tail_length", str(val)))
+                               onChange=lambda ev, val, *_: (
+                               setattr(self, "pending_tail_length", str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, "pending_tail_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"Fuselage Radius: {self.pending_fuselage_radius} m"],
                     mui.Slider(value=float(self.pending_fuselage_radius), min=1.0, max=5.0, step=0.01,
                                valueLabelDisplay="auto",
-                               onChangeCommitted=lambda ev, val: setattr(self, "pending_fuselage_radius", str(val)))
+                               onChange=lambda ev, val, *_: (
+                               setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()),
+                               onChangeCommitted=lambda ev, val, *_: (
+                               setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()))
                 ],
                 mui.Divider(sx={"my": 1}),
                 mui.Typography(variant="subtitle2")["Minimum Radius Constraints"],
@@ -370,14 +481,20 @@ class InputsPanel(Component):
                     f"Wing X-Position: {int(float(self.pending_x_offs_wings) * 100)}% of length"],
                 mui.Slider(value=float(self.pending_x_offs_wings), min=0.0, max=1.0, step=0.01,
                            valueLabelDisplay="auto",
-                           onChangeCommitted=lambda ev, val: setattr(self, "pending_x_offs_wings", str(val)))
+                           onChange=lambda ev, val, *_: (
+                           setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()),
+                           onChangeCommitted=lambda ev, val, *_: (
+                           setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()))
             ],
             layout.Box(orientation="vertical", sx={"mb": 2})[
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Wing Z-Position: {int(float(self.pending_z_offs_wings) * 100)}% (relative)"],
                 mui.Slider(value=float(self.pending_z_offs_wings), min=-1.2, max=1.2, step=0.01,
                            valueLabelDisplay="auto",
-                           onChangeCommitted=lambda ev, val: setattr(self, "pending_z_offs_wings", str(val)))
+                           onChange=lambda ev, val, *_: (
+                           setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()),
+                           onChangeCommitted=lambda ev, val, *_: (
+                           setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()))
             ],
 
             mui.Divider(sx={"my": 1}),
@@ -388,7 +505,10 @@ class InputsPanel(Component):
                     f"Global Dihedral: {self.pending_wing_dihedral}°"],
                 mui.Slider(value=float(self.pending_wing_dihedral), min=-10.0, max=15.0, step=0.5,
                            valueLabelDisplay="auto",
-                           onChangeCommitted=lambda ev, val: setattr(self, "pending_wing_dihedral", str(val))),
+                           onChange=lambda ev, val, *_: (
+                           setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost()),
+                           onChangeCommitted=lambda ev, val, *_: (
+                           setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost())),
             ],
 
             layout.Box(orientation="vertical", style={"padding": "0 10px"})[
@@ -400,29 +520,37 @@ class InputsPanel(Component):
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Root Chord: {int(sec['root_chord'] * 100)}% of Fuselage"],
-                        mui.Slider(value=sec['root_chord'], min=0.01, max=0.5, step=0.01,
-                                   valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'root_chord',
-                                                                                                     float(val))),
+                        mui.Slider(value=sec['root_chord'], min=0.01, max=0.5, step=0.01, valueLabelDisplay="auto",
+                                   onChange=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'root_chord',
+                                                                                                float(val)),
+                                   onChangeCommitted=lambda ev, val, *_, idx=i: self.update_wing_section(idx,
+                                                                                                         'root_chord',
+                                                                                                         float(val))),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Span: {int(sec['span'] * 100)}% of Fuselage"],
                         mui.Slider(value=sec['span'], min=0.01, max=0.5, step=0.01, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'span',
-                                                                                                     float(val))),
+                                   onChange=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'span',
+                                                                                                float(val)),
+                                   onChangeCommitted=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'span',
+                                                                                                         float(val))),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Tip Chord: {int(sec['tip_chord'] * 100)}% of Fuselage"],
-                        mui.Slider(value=sec['tip_chord'], min=0.01, max=0.5, step=0.01,
-                                   valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'tip_chord',
-                                                                                                     float(val))),
+                        mui.Slider(value=sec['tip_chord'], min=0.01, max=0.5, step=0.01, valueLabelDisplay="auto",
+                                   onChange=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'tip_chord',
+                                                                                                float(val)),
+                                   onChangeCommitted=lambda ev, val, *_, idx=i: self.update_wing_section(idx,
+                                                                                                         'tip_chord',
+                                                                                                         float(val))),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"LE Sweep Angle: {sec['sweep']}°"],
                         mui.Slider(value=sec['sweep'], min=-20.0, max=60.0, step=0.5, valueLabelDisplay="auto",
-                                   onChangeCommitted=lambda ev, val, idx=i: self.update_wing_section(idx, 'sweep',
-                                                                                                     float(val))),
+                                   onChange=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'sweep',
+                                                                                                float(val)),
+                                   onChangeCommitted=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'sweep',
+                                                                                                         float(val))),
                     ] for i, sec in enumerate(self.pending_wing_sections)
                 ],
                 layout.Box(style={"display": "flex", "gap": "10px", "marginTop": "10px"})[
@@ -453,7 +581,6 @@ class InputsPanel(Component):
                 include_title=False
             ) if self.pending_include_hor_tail else []),
 
-                # --- FOOTER WITH BIG OPTIMIZE BUTTON ---
             mui.Divider(sx={"my": 3}),
             mui.Button(
                 variant="contained", color="success", size="large", fullWidth=True,
@@ -464,5 +591,4 @@ class InputsPanel(Component):
                     "Optimize Geometry"
                 ]
             ]
-            # ---------------------------------------
         ]

@@ -7,8 +7,9 @@ from parapy.webgui import layout, viewer, mui, html
 from parapy.webgui.core import Component, NodeType, State, update
 from parapy.webgui.app_bar import AppBar
 
-from area_rule import AR
+from area_rule import AR, PREVIEW_AR
 from inputs_panel import InputsPanel
+#from Backend.ghost_geometry import GHOST
 
 
 class App(Component):
@@ -775,7 +776,11 @@ class App(Component):
                                 AR.aircraft.fuselage,
                                 AR.aircraft.vert_tail_less_fuselage,
                                 AR.aircraft.hor_tail_less_fuselage,
-                                AR.aircraft.constraint_visualizers
+                                AR.aircraft.constraint_visualizers,
+                                PREVIEW_AR.ghost_wings,
+                                PREVIEW_AR.ghost_vt,
+                                PREVIEW_AR.ghost_ht,
+                                PREVIEW_AR.ghost_fuselage
                             ]
                         ),
                     ],

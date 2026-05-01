@@ -13,6 +13,7 @@ class IntersectionChecker(Base):
     inters_hor_tail_wing = Input()
     inters_vert_tail_wings = Input()
     inters_vert_tail_hor_tail = Input()
+    include_hor_tail = Input(True)
 
     # Cross-sectional area objects for tip checking
     wings_first_cross_sectional_area = Input()
@@ -50,6 +51,10 @@ class IntersectionChecker(Base):
 
     @Attribute
     def hor_tail_fuselage_check(self):
+        # If horizontal tail doesn't exist bypass
+        if not self.include_hor_tail:
+            return False
+
         vertices_ht = self.inters_right_hor_tail_fuselage_root_curve.vertices
         is_error_ht = len(vertices_ht) != 1
         self.error_lifting_surface = is_error_ht
@@ -74,6 +79,10 @@ class IntersectionChecker(Base):
 
     @Attribute
     def wing_hor_tail_check(self):
+        # If horizontal tail doesn't exist bypass
+        if not self.include_hor_tail:
+            return False
+
         wires_wht = self.inters_hor_tail_wing.wires
         is_error_wht = len(wires_wht) != 0
         self.error_lifting_surface = is_error_wht
@@ -98,6 +107,10 @@ class IntersectionChecker(Base):
 
     @Attribute
     def hor_tail_vert_tail_intersection_check(self):
+        # If horizontal tail doesn't exist bypass
+        if not self.include_hor_tail:
+            return False
+
         wires_htvt = self.inters_vert_tail_hor_tail.wires
         is_error_htvt = len(wires_htvt) != 0
         self.error_hor_tail_vert_tail_inter = is_error_htvt
@@ -122,6 +135,10 @@ class IntersectionChecker(Base):
 
     @Attribute
     def hor_tail_tip_out_fus_check(self):
+        # If horizontal tail doesn't exist bypass
+        if not self.include_hor_tail:
+            return False
+
         is_error_tip_ht = (len(self.ht_first_cross_sectional_area.vertices) != 0 or
                            len(self.ht_last_cross_sectional_area.vertices) != 0)
         self.error_ht_tip = is_error_tip_ht

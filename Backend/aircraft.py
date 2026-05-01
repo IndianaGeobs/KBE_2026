@@ -216,6 +216,7 @@ class Aircraft(GeomBase):
             wing_file=self.wing_file,
             fuselage=self.geometry.fuselage_solid,
             right_wing=self.geometry.right_wing,
+            include_hor_tail=self.include_hor_tail
         )
 
     @Part
