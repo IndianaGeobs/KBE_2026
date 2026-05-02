@@ -1,7 +1,7 @@
 import os
 from parapy.core import Base, Input, Part, Attribute
 from Backend.aircraft import Aircraft
-from parapy.geom import Compound
+from parapy.geom import Compound, Circle, Position, Point, Vector, YOZ
 from Backend.geometry_manager import GeometryManager
 
 # --- PATH LOGIC ---
@@ -258,6 +258,73 @@ class AreaRule(Base):
             transparency=0.5,
             line_thickness=1e-9,
             hidden=not (self.include_hor_tail and self.is_ht_modified)
+        )
+
+    @Part(parse=False)
+    def ghost_constraints(self):
+        """Draws fast wireframe circles for the ghost constraints, properly centered on the local fuselage."""
+
+        n_len = self.nose_length
+        b_len = self.main_body_length
+        t_len = self.tail_length
+        f_rad = self.fuselage_radius
+
+        ghost_total_length = n_len + b_len + t_len
+        tail_start_pct = (n_len + b_len) / ghost_total_length
+
+        try:
+            xs = self.aircraft.fuselage_data.xs
+            radii = self.aircraft.fuselage_data.radii
+        except AttributeError:
+            xs = []
+            radii = []
+
+        def get_true_fuselage_radius(x_pct):
+            """Finds the actual physical radius of the fuselage at this X position."""
+            target_x = x_pct * ghost_total_length
+            safe_len = min(len(xs), len(radii))
+
+            if safe_len == 0:
+                return f_rad
+
+            idx = min(range(safe_len), key=lambda i: abs(xs[i] - target_x))
+            return radii[idx]
+
+        circles = []
+        for c in self.user_constraints:
+            x_pct = c["x_pct"]
+            r_pct = c.get("r_pct", 0.5)
+
+            # 1. Get the TRUE radius of the fuselage at this section
+            true_fuse_radius = get_true_fuselage_radius(x_pct)
+
+            if true_fuse_radius <= 0:
+                continue
+
+            # 2. Calculate the constraint's radius based on the percentage
+            constraint_radius = true_fuse_radius * r_pct
+
+            # 3. Find the Y-center of the fuselage using the Flat Top rule
+            # Notice we use `true_fuse_radius` here, NOT the constraint radius!
+            if x_pct > tail_start_pct:
+                y_center = f_rad - true_fuse_radius
+            else:
+                y_center = 0.0
+
+            # 4. Create the wireframe circle centered exactly at y_center
+            circles.append(
+                Circle(
+                    radius=constraint_radius,
+                    position=YOZ.translate("z", x_pct * ghost_total_length).translate("y", y_center)
+                )
+            )
+
+        return Compound(
+            built_from=circles,
+            color="red",
+            line_thickness=3,
+            display_mode="wireframe",
+            hidden=not self.show_constraints
         )
 
 

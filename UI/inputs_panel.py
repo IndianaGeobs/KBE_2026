@@ -1,4 +1,5 @@
 import os
+import copy
 from parapy.webgui import layout, html, mui
 from parapy.webgui.core import Component, NodeType, FileUpload, Prop, State, update
 
@@ -83,7 +84,7 @@ class InputsPanel(Component):
 
             PREVIEW_AR.wing_dihedral = float(self.pending_wing_dihedral)
             PREVIEW_AR.wing_root_chord_ratio = float(self.pending_wing_root_chord)
-            PREVIEW_AR.wing_sections_ratios = self.pending_wing_sections
+            PREVIEW_AR.wing_sections_ratios = copy.deepcopy(self.pending_wing_sections)
 
             PREVIEW_AR.vt_root_chord_ratio = float(self.pending_vt_root_chord)
             PREVIEW_AR.vt_span_ratio = float(self.pending_vt_span)
@@ -96,7 +97,7 @@ class InputsPanel(Component):
             PREVIEW_AR.ht_sweep = float(self.pending_ht_sweep)
 
             PREVIEW_AR.include_hor_tail = self.pending_include_hor_tail
-            PREVIEW_AR.user_constraints = self.pending_user_constraints
+            PREVIEW_AR.user_constraints = copy.deepcopy(self.pending_user_constraints)
 
             update()
         except ValueError:
@@ -185,7 +186,6 @@ class InputsPanel(Component):
         new_list = list(self.pending_user_constraints)
         new_list.append({"x_pct": 0.5, "r_pct": 0.5})
         self.pending_user_constraints = new_list
-        AR.user_constraints = new_list
         self.sync_ghost()
         update()
 
@@ -193,7 +193,6 @@ class InputsPanel(Component):
         new_list = list(self.pending_user_constraints)
         new_list.pop(idx)
         self.pending_user_constraints = new_list
-        AR.user_constraints = new_list
         self.sync_ghost()
         update()
 
@@ -202,7 +201,6 @@ class InputsPanel(Component):
         new_list[idx] = dict(new_list[idx])
         new_list[idx][key] = val
         self.pending_user_constraints = new_list
-        AR.user_constraints = new_list
         self.sync_ghost()
         update()
 
@@ -339,23 +337,36 @@ class InputsPanel(Component):
             return section
 
         def render_constraint_box(i, c):
+            # The Magic Fix: Add the list length to the key!
+            # When an item is removed, the length changes, forcing a completely fresh redraw.
+            box_key = f"constraint_box_{i}_len{len(self.pending_user_constraints)}"
+
             return layout.Box(
-                key=f"constraint_box_{i}",
+                key=box_key,
                 style={"border": "1px solid #555", "borderRadius": "4px", "padding": "10px", "marginTop": "10px"}
             )[
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Constraint {i + 1} X-Position: {int(c['x_pct'] * 100)}%"],
-                mui.Slider(value=c['x_pct'], min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
-                           onChange=lambda ev, val, *_: self.update_constraint(i, 'x_pct', float(val)),
-                           onChangeCommitted=lambda ev, val, *_: self.update_constraint(i, 'x_pct', float(val))),
+                mui.Slider(value=c['x_pct'], min=0.005, max=0.995, step=0.01, valueLabelDisplay="auto",
+                           onChange=lambda ev, val, *_, idx=i: self.update_constraint(idx, 'x_pct', float(val)),
+                           onChangeCommitted=lambda ev, val, *_, idx=i: self.update_constraint(idx, 'x_pct',
+                                                                                               float(val))),
 
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Constraint {i + 1} Min Radius: {int(c.get('r_pct', 0.5) * 100)}% of local fuselage"],
                 mui.Slider(value=c.get('r_pct', 0.5), min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
-                           onChange=lambda ev, val, *_: self.update_constraint(i, 'r_pct', float(val)),
-                           onChangeCommitted=lambda ev, val, *_: self.update_constraint(i, 'r_pct', float(val))),
+                           onChange=lambda ev, val, *_, idx=i: self.update_constraint(idx, 'r_pct', float(val)),
+                           onChangeCommitted=lambda ev, val, *_, idx=i: self.update_constraint(idx, 'r_pct',
+                                                                                               float(val))),
+
                 layout.Box(h_align="right")[
-                    mui.Button(color="error", size="small", onClick=lambda ev: self.remove_constraint(i))["Remove"]]
+                    # Added *args to absorb any unexpected event data, and explicitly locked idx=i
+                    mui.Button(
+                        color="error",
+                        size="small",
+                        onClick=lambda *args, idx=i: self.remove_constraint(idx)
+                    )["Remove"]
+                ]
             ]
 
         def get_filename(pending_file, busy):

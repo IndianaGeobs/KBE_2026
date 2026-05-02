@@ -780,7 +780,8 @@ class App(Component):
                                 PREVIEW_AR.ghost_wings,
                                 PREVIEW_AR.ghost_vt,
                                 PREVIEW_AR.ghost_ht,
-                                PREVIEW_AR.ghost_fuselage
+                                PREVIEW_AR.ghost_fuselage,
+                                PREVIEW_AR.ghost_constraints
                             ]
                         ),
                     ],
