@@ -508,10 +508,11 @@ class App(Component):
             post_opt_errors = self._check_post_optimization_errors()
 
             if post_opt_errors:
-                self.busy = False
-                update()
-                return
+                # ERROR FOUND: Jump straight to the 3D View (Page 2)
+                # so the user can visually inspect the broken wing/tail root!
+                self.page = 2
             else:
+                # SUCCESS: Jump to the Results/Graphs (Page 1)
                 self.page = 1
 
         except Exception as e:
@@ -523,6 +524,8 @@ class App(Component):
             except:
                 pass
         finally:
+            # This ensures the loading spinner turns off and the UI updates
+            # regardless of whether it succeeded, failed, or crashed.
             self.busy = False
             update()
 
@@ -715,7 +718,7 @@ class App(Component):
                     mui.DialogContentText['After optimization, the horizontal tail root is not properly contained within the new fuselage'],
                     mui.DialogContentText['The optimization resulted in a fuselage that doesn\'t fully enclose the horizontal tail root. Consider adjusting tail position or constraints.']
                 ],
-                mui.DialogActions[mui.Button(onClick=self.handle_close_ht_new_fus_error, color='error')['Ok']]
+                mui.DialogActions[mui.Button(onClick=self.handle_close_wing_new_fus_error, color='error')['Inspect 3D Model']]
             ],
             mui.Dialog(open=self.dialog_open_vt_new_fus_error, onClose=self.handle_close_vt_new_fus_error)[
                 mui.Box(sx={'textAlign': 'center', 'pt': 2})[

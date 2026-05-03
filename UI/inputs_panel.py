@@ -250,6 +250,11 @@ class InputsPanel(Component):
         self.reset_key3 += 1
         self.reset_key4 += 1
 
+    def handle_apply_and_optimize(self, *args):
+        """Forces pending UI states to be committed before running the heavy calculation."""
+        self.on_apply()
+        self.on_optimize()
+
     def render(self) -> NodeType:
         def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key,
                                     root_state=None, span_state=None, tip_state=None, sweep_state=None,
@@ -595,7 +600,7 @@ class InputsPanel(Component):
             mui.Divider(sx={"my": 3}),
             mui.Button(
                 variant="contained", color="success", size="large", fullWidth=True,
-                onClick=self.on_optimize, disabled=self.is_busy
+                onClick=self.handle_apply_and_optimize, disabled=self.is_busy
             )[
                 layout.Box(orientation="horizontal", gap="0.5em", h_align="center")[
                     mui.CircularProgress(size=20, sx={"color": "white"}) if self.is_busy else None,

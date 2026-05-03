@@ -50,9 +50,11 @@ class Fuselage(GeomBase):
         cyl_radius = float(np.interp(nose_end_x, xs, rs))
 
         if is_main_body:
-            # Force perfect cylinder using the nose's exit radius
-            xs_clean = [x_start, x_end]
-            rs_clean = [cyl_radius, cyl_radius]
+            # Force perfect cylinder, but KEEP the high density of X-stations
+            # so the optimizer has discrete control points to pinch!
+            mask = (xs > x_start + 1e-5) & (xs < x_end - 1e-5)
+            xs_clean = [x_start] + xs[mask].tolist() + [x_end]
+            rs_clean = [cyl_radius] * len(xs_clean)
 
         elif is_nose:
             # Nose naturally ends at nose_end_x. Force the final point to match.

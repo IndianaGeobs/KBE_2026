@@ -1,16 +1,42 @@
 import os
 import shutil
+import numpy as np
 from parapy.core import Base, Input, Attribute, Part, action
-from parapy.geom import Compound
+from parapy.geom import Compound, GeomBase, Circle, LoftedSolid
 from parapy.exchange.step import STEPWriter
 
-from Backend.fuselage import Fuselage
+class OptimizedFuselage(GeomBase):
+    """Builds a continuous 3D loft directly from the optimizer's raw data arrays."""
+    xs = Input()
+    rs = Input()
+    color = Input("deepskyblue")
+
+    @Part(parse=False)
+    def cross_sections(self):
+        ribs = []
+        for x, r in zip(self.xs, self.rs):
+            # Safe minimum radius to prevent CAD engine crashes
+            safe_r = max(float(r), 1e-4)
+            # Position the circle down the X-axis
+            pos = self.position.translate('x', float(x)).rotate90('y')
+            ribs.append(Circle(radius=safe_r, position=pos, hidden=True))
+        return ribs
+
+    @Part(parse=False)
+    def solid(self):
+        return LoftedSolid(
+            profiles=self.cross_sections,
+            ruled=True,
+            color=self.color,
+            line_thickness=1e-9,
+            isos=0
+        )
+
 
 class OptimizedResults(Base):
     """
     Handles optimized fuselage results, file generation, and STEP exports.
     """
-
     # Input parameters
     fuselage           = Input()
     r_optimized        = Input()
@@ -20,8 +46,7 @@ class OptimizedResults(Base):
     vert_tail          = Input()
     hor_tail           = Input(None)
     include_hor_tail   = Input(True)
-
-    fuselage_stations = Input()
+    fuselage_stations  = Input()
 
     @Attribute
     def optimized_fuselage_file(self):
@@ -53,12 +78,16 @@ class OptimizedResults(Base):
 
     @Part(parse=False)
     def new_fuselage(self):
-        """Create new fuselage using optimized data."""
-        return Fuselage(fuselage_file=self.optimized_fuselage_file, max_revolution_curve_degree=2, color="deepskyblue")
+        """Create new fuselage using the continuous optimized data."""
+        return OptimizedFuselage(
+            xs=self.fuselage_stations,
+            rs=self.r_optimized,
+            color="deepskyblue"
+        )
 
     @Part
     def optimized_aircraft(self):
-        """Combine new optimized fuselage + same wings/tail to make a STEP‐exportable solid."""
+        """Combine new optimized fuselage + same wings/tail to make a STEP-exportable solid."""
         return Compound(
             built_from=[
                 self.new_fuselage.solid,
