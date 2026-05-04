@@ -256,9 +256,30 @@ class InputsPanel(Component):
         self.on_optimize()
 
     def render(self) -> NodeType:
+
+        # ==========================================
+        # 1. PULL DYNAMIC LIMITS FROM THE BACKEND
+        # ==========================================
+        dyn_max_w_x = PREVIEW_AR.max_wing_x
+        dyn_max_w_c = PREVIEW_AR.max_wing_root_chord
+        dyn_max_w_z = PREVIEW_AR.max_z_offs_wings     # Z Limit
+
+        dyn_min_tail_x = PREVIEW_AR.min_tail_x
+
+        dyn_max_vt_x = PREVIEW_AR.max_vt_x
+        dyn_max_vt_c = PREVIEW_AR.max_vt_root_chord
+        dyn_max_vt_z = PREVIEW_AR.max_z_offs_vt       # Z Limit
+
+        dyn_max_ht_x = PREVIEW_AR.max_ht_x
+        dyn_max_ht_c = PREVIEW_AR.max_ht_root_chord
+        dyn_max_ht_z = PREVIEW_AR.max_z_offs_ht       # Z Limit
+
+        # ==========================================
+        # 2. RENDER HELPER FUNCTIONS
+        # ==========================================
         def lifting_surface_section(title, upload, busy, txt, x_offset, z_offset, reset_key,
                                     root_state=None, span_state=None, tip_state=None, sweep_state=None,
-                                    include_title=True):
+                                    include_title=True, min_x=0.0, max_x=1.0, max_z=1.0, max_root=0.3):
             curr_x = float(getattr(self, x_offset))
             curr_z = float(getattr(self, z_offset))
 
@@ -277,18 +298,19 @@ class InputsPanel(Component):
                 layout.Box(orientation="vertical", sx={"mb": 2})[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"{title} X-Position: {int(curr_x * 100)}% of length"],
-                    mui.Slider(value=curr_x, min=0.0, max=1.0, step=0.01, valueLabelDisplay="auto",
+                    mui.Slider(value=curr_x, min=min_x, max=max_x, step=0.01, valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (setattr(self, x_offset, str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, x_offset, str(val)), self.sync_ghost()))
+                                   setattr(self, x_offset, str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical", sx={"mb": 2})[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                         f"{title} Z-Position: {int(curr_z * 100)}% (relative to radius)"],
-                    mui.Slider(value=curr_z, min=-1.2, max=1.2, step=0.01, valueLabelDisplay="auto",
+                    # --- UPDATED: Uses dynamic max_z logic for both positive and negative extremes ---
+                    mui.Slider(value=curr_z, min=-max_z, max=max_z, step=0.01, valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (setattr(self, z_offset, str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, z_offset, str(val)), self.sync_ghost()))
+                                   setattr(self, z_offset, str(val)), self.sync_ghost()))
                 ]
             ]
 
@@ -305,34 +327,34 @@ class InputsPanel(Component):
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Root Chord: {int(c_root * 100)}%"],
-                        mui.Slider(value=c_root, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
+                        mui.Slider(value=c_root, min=0.01, max=max_root, step=0.01, valueLabelDisplay="auto",
                                    onChange=lambda ev, val, *_: (
-                                   setattr(self, root_state, float(val)), self.sync_ghost()),
+                                       setattr(self, root_state, float(val)), self.sync_ghost()),
                                    onChangeCommitted=lambda ev, val, *_: (
-                                   setattr(self, root_state, float(val)), self.sync_ghost())),
+                                       setattr(self, root_state, float(val)), self.sync_ghost())),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Span: {int(c_span * 100)}%"],
                         mui.Slider(value=c_span, min=0.01, max=0.4, step=0.01, valueLabelDisplay="auto",
                                    onChange=lambda ev, val, *_: (
-                                   setattr(self, span_state, float(val)), self.sync_ghost()),
+                                       setattr(self, span_state, float(val)), self.sync_ghost()),
                                    onChangeCommitted=lambda ev, val, *_: (
-                                   setattr(self, span_state, float(val)), self.sync_ghost())),
+                                       setattr(self, span_state, float(val)), self.sync_ghost())),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Tip Chord: {int(c_tip * 100)}%"],
                         mui.Slider(value=c_tip, min=0.01, max=0.3, step=0.01, valueLabelDisplay="auto",
                                    onChange=lambda ev, val, *_: (
-                                   setattr(self, tip_state, float(val)), self.sync_ghost()),
+                                       setattr(self, tip_state, float(val)), self.sync_ghost()),
                                    onChangeCommitted=lambda ev, val, *_: (
-                                   setattr(self, tip_state, float(val)), self.sync_ghost())),
+                                       setattr(self, tip_state, float(val)), self.sync_ghost())),
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[f"LE Sweep: {c_sweep}°"],
                         mui.Slider(value=c_sweep, min=-10.0, max=60.0, step=0.5, valueLabelDisplay="auto",
                                    onChange=lambda ev, val, *_: (
-                                   setattr(self, sweep_state, float(val)), self.sync_ghost()),
+                                       setattr(self, sweep_state, float(val)), self.sync_ghost()),
                                    onChangeCommitted=lambda ev, val, *_: (
-                                   setattr(self, sweep_state, float(val)), self.sync_ghost()))
+                                       setattr(self, sweep_state, float(val)), self.sync_ghost()))
                     ]
                 )
 
@@ -342,8 +364,6 @@ class InputsPanel(Component):
             return section
 
         def render_constraint_box(i, c):
-            # The Magic Fix: Add the list length to the key!
-            # When an item is removed, the length changes, forcing a completely fresh redraw.
             box_key = f"constraint_box_{i}_len{len(self.pending_user_constraints)}"
 
             return layout.Box(
@@ -365,7 +385,6 @@ class InputsPanel(Component):
                                                                                                float(val))),
 
                 layout.Box(h_align="right")[
-                    # Added *args to absorb any unexpected event data, and explicitly locked idx=i
                     mui.Button(
                         color="error",
                         size="small",
@@ -393,6 +412,9 @@ class InputsPanel(Component):
             get_filename("pending_fuselage_file", busy[3]),
         ]
 
+        # ==========================================
+        # 3. MAIN UI LAYOUT
+        # ==========================================
         return layout.Box(orientation="vertical", gap="1em", style={"padding": "1em"})[
 
             layout.Box(style={"display": "flex", "justifyContent": "space-between", "alignItems": "center",
@@ -440,9 +462,9 @@ class InputsPanel(Component):
                     mui.Slider(value=float(self.pending_nose_length), min=5.0, max=25.0, step=0.1,
                                valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (
-                               setattr(self, "pending_nose_length", str(val)), self.sync_ghost()),
+                                   setattr(self, "pending_nose_length", str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, "pending_nose_length", str(val)), self.sync_ghost()))
+                                   setattr(self, "pending_nose_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
@@ -450,9 +472,9 @@ class InputsPanel(Component):
                     mui.Slider(value=float(self.pending_main_body_length), min=10.0, max=60.0, step=0.5,
                                valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (
-                               setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()),
+                                   setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()))
+                                   setattr(self, "pending_main_body_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
@@ -460,9 +482,9 @@ class InputsPanel(Component):
                     mui.Slider(value=float(self.pending_tail_length), min=5.0, max=30.0, step=0.1,
                                valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (
-                               setattr(self, "pending_tail_length", str(val)), self.sync_ghost()),
+                                   setattr(self, "pending_tail_length", str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, "pending_tail_length", str(val)), self.sync_ghost()))
+                                   setattr(self, "pending_tail_length", str(val)), self.sync_ghost()))
                 ],
                 layout.Box(orientation="vertical")[
                     mui.Typography(variant="caption", sx={"color": "text.secondary"})[
@@ -470,9 +492,9 @@ class InputsPanel(Component):
                     mui.Slider(value=float(self.pending_fuselage_radius), min=1.0, max=5.0, step=0.01,
                                valueLabelDisplay="auto",
                                onChange=lambda ev, val, *_: (
-                               setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()),
+                                   setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()),
                                onChangeCommitted=lambda ev, val, *_: (
-                               setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()))
+                                   setattr(self, "pending_fuselage_radius", str(val)), self.sync_ghost()))
                 ],
                 mui.Divider(sx={"my": 1}),
                 mui.Typography(variant="subtitle2")["Minimum Radius Constraints"],
@@ -495,22 +517,23 @@ class InputsPanel(Component):
             layout.Box(orientation="vertical", sx={"mb": 2})[
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Wing X-Position: {int(float(self.pending_x_offs_wings) * 100)}% of length"],
-                mui.Slider(value=float(self.pending_x_offs_wings), min=0.0, max=1.0, step=0.01,
+                mui.Slider(value=float(self.pending_x_offs_wings), min=0.0, max=dyn_max_w_x, step=0.01,
                            valueLabelDisplay="auto",
                            onChange=lambda ev, val, *_: (
-                           setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()),
+                               setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()),
                            onChangeCommitted=lambda ev, val, *_: (
-                           setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()))
+                               setattr(self, "pending_x_offs_wings", str(val)), self.sync_ghost()))
             ],
             layout.Box(orientation="vertical", sx={"mb": 2})[
                 mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                     f"Wing Z-Position: {int(float(self.pending_z_offs_wings) * 100)}% (relative)"],
-                mui.Slider(value=float(self.pending_z_offs_wings), min=-1.2, max=1.2, step=0.01,
+                # --- UPDATED: Uses dynamic dyn_max_w_z for the Wing Z limit ---
+                mui.Slider(value=float(self.pending_z_offs_wings), min=-dyn_max_w_z, max=dyn_max_w_z, step=0.01,
                            valueLabelDisplay="auto",
                            onChange=lambda ev, val, *_: (
-                           setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()),
+                               setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()),
                            onChangeCommitted=lambda ev, val, *_: (
-                           setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()))
+                               setattr(self, "pending_z_offs_wings", str(val)), self.sync_ghost()))
             ],
 
             mui.Divider(sx={"my": 1}),
@@ -522,9 +545,9 @@ class InputsPanel(Component):
                 mui.Slider(value=float(self.pending_wing_dihedral), min=-10.0, max=15.0, step=0.5,
                            valueLabelDisplay="auto",
                            onChange=lambda ev, val, *_: (
-                           setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost()),
+                               setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost()),
                            onChangeCommitted=lambda ev, val, *_: (
-                           setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost())),
+                               setattr(self, "pending_wing_dihedral", str(val)), self.sync_ghost())),
             ],
 
             layout.Box(orientation="vertical", style={"padding": "0 10px"})[
@@ -536,7 +559,8 @@ class InputsPanel(Component):
 
                         mui.Typography(variant="caption", sx={"color": "text.secondary"})[
                             f"Root Chord: {int(sec['root_chord'] * 100)}% of Fuselage"],
-                        mui.Slider(value=sec['root_chord'], min=0.01, max=0.5, step=0.01, valueLabelDisplay="auto",
+                        mui.Slider(value=sec['root_chord'], min=0.01,
+                                   max=dyn_max_w_c if i == 0 else 0.5, step=0.01, valueLabelDisplay="auto",
                                    onChange=lambda ev, val, *_, idx=i: self.update_wing_section(idx, 'root_chord',
                                                                                                 float(val)),
                                    onChangeCommitted=lambda ev, val, *_, idx=i: self.update_wing_section(idx,
@@ -578,23 +602,28 @@ class InputsPanel(Component):
             ],
             mui.Divider(sx={"my": 2}),
 
+            # --- Pass dynamic tail Z limit (max_z) ---
             *lifting_surface_section(
                 "Vertical Tail", self.upload2, busy[1], filenames[1], "pending_x_offs_vert_tail",
                 "pending_z_offs_vert_tail", self.reset_key2,
                 root_state="pending_vt_root_chord", span_state="pending_vt_span", tip_state="pending_vt_tip_chord",
-                sweep_state="pending_vt_sweep"
+                sweep_state="pending_vt_sweep",
+                min_x=dyn_min_tail_x, max_x=dyn_max_vt_x, max_z=dyn_max_vt_z, max_root=dyn_max_vt_c
             ),
 
             layout.Box(style={"display": "flex", "alignItems": "center", "justifyContent": "space-between"})[
                 mui.Typography(variant="h6")["Horizontal Tail"],
                 mui.Checkbox(checked=self.pending_include_hor_tail, onChange=self.toggle_horizontal),
             ],
+
+            # --- Pass dynamic tail Z limit (max_z) ---
             *(lifting_surface_section(
                 "Horizontal Tail", self.upload3, busy[2], filenames[2], "pending_x_offs_tail", "pending_z_offs_tail",
                 self.reset_key3,
                 root_state="pending_ht_root_chord", span_state="pending_ht_span", tip_state="pending_ht_tip_chord",
                 sweep_state="pending_ht_sweep",
-                include_title=False
+                include_title=False,
+                min_x=dyn_min_tail_x, max_x=dyn_max_ht_x, max_z=dyn_max_ht_z, max_root=dyn_max_ht_c
             ) if self.pending_include_hor_tail else []),
 
             mui.Divider(sx={"my": 3}),

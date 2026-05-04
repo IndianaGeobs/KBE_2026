@@ -327,6 +327,96 @@ class AreaRule(Base):
             hidden=not self.show_constraints
         )
 
+    # ==========================================
+    # UI boundaries for lifting surfaces sliders (Collision Prevention)
+    # ==========================================
+    @Attribute
+    def tail_start_x(self):
+        """Finds the front-most X coordinate of the tail section."""
+        vt_x = self.x_offs_vert_tail
+        ht_x = self.x_offs_tail if self.include_hor_tail else 1.0
+        return min(vt_x, ht_x)
+
+    @Attribute
+    def max_wing_x(self):
+        """Wing cannot move so far back that it hits the tail."""
+        w_c = self.wing_sections_ratios[0]['root_chord']
+        return max(0.0, min(1.0, self.tail_start_x - w_c))
+
+    @Attribute
+    def max_wing_root_chord(self):
+        """Wing cannot grow so large that its trailing edge hits the tail."""
+        return max(0.01, min(0.5, self.tail_start_x - self.x_offs_wings))
+
+    @Attribute
+    def min_tail_x(self):
+        """Tails cannot move so far forward that they hit the wing."""
+        w_c = self.wing_sections_ratios[0]['root_chord']
+        return max(0.0, min(1.0, self.x_offs_wings + w_c))
+
+    @Attribute
+    def max_vt_x(self):
+        """VT cannot move past the end of the fuselage."""
+        return max(self.min_tail_x, min(1.0, 1.0 - self.vt_root_chord_ratio))
+
+    @Attribute
+    def max_ht_x(self):
+        """HT cannot move past the end of the fuselage."""
+        return max(self.min_tail_x, min(1.0, 1.0 - self.ht_root_chord_ratio))
+
+    @Attribute
+    def max_vt_root_chord(self):
+        """VT cannot grow past the end of the fuselage."""
+        return max(0.01, min(0.3, 1.0 - self.x_offs_vert_tail))
+
+    @Attribute
+    def max_ht_root_chord(self):
+        """HT cannot grow past the end of the fuselage."""
+        return max(0.01, min(0.3, 1.0 - self.x_offs_tail))
+
+    @Attribute
+    def max_z_offs_wings(self):
+        """Calculates the max Z-offset using the airfoil thickness."""
+        import math
+
+        # Pull the exact physical thickness directly from the ParametricWing object
+        thickness_abs = self.aircraft.right_wing.root_thickness
+
+        # Max Z ratio = (Radius - half_thickness) / Radius
+        max_ratio = (self.fuselage_radius - (thickness_abs / 2.0)) / self.fuselage_radius -0.05
+
+        return max(0.0, min(0.85, max_ratio))
+
+    @Attribute
+    def max_z_offs_ht(self):
+        """Calculates the max Z-offset using the horizontal tail airfoil thickness."""
+        if not self.include_hor_tail:
+            return 0.90
+
+        thickness_abs = self.aircraft.h_tail_right.root_thickness
+
+        max_ratio = (self.fuselage_radius - (thickness_abs / 2.0)) / self.fuselage_radius -0.05
+        return max(0.0, min(0.85, max_ratio))
+
+    @Attribute
+    def max_z_offs_vt(self):
+        """Calculates the max Z-offset using the vertical tail airfoil thickness."""
+        import math
+
+        # For the VT, thickness is the left/right width of the root
+        width_abs = self.aircraft.vert_tail.root_thickness
+        half_width = width_abs / 2.0
+
+        if half_width >= self.fuselage_radius:
+            return 0.0
+
+        # Geometric intersection of a circle
+        z_abs = math.sqrt(self.fuselage_radius ** 2 - half_width ** 2)
+        max_ratio = z_abs / self.fuselage_radius -0.05
+
+        return max(0.0, min(0.85, max_ratio))
+
+
 
 # Global instances shared across the web app components
 AR = AreaRule()

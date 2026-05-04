@@ -111,3 +111,20 @@ class ParametricWing(GeomBase):
             color="red" if self.is_vertical else "yellow",
             transparency=0.2
         )
+
+    # Lifting surface height to correctly limit the z-offset sliders
+    @Attribute
+    def thickness_ratio(self):
+        """Finds the exact thickness ratio directly from the uploaded airfoil points."""
+        z_coords = [p.z for p in self.normalized_airfoil_points]
+
+        if not z_coords:
+            return 0.15  # Safe fallback if the file is broken or missing
+
+        # The total normalized height of the airfoil
+        return max(z_coords) - min(z_coords)
+
+    @Attribute
+    def root_thickness(self):
+        """Returns the absolute physical height of the root chord in meters."""
+        return self.thickness_ratio * self.root_chord
